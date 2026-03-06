@@ -1,0 +1,87 @@
+'use client'
+
+import { Check, BookOpen } from 'lucide-react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import type { StudyTask } from '@/lib/types'
+
+interface TaskCardProps {
+  task: StudyTask
+  onComplete: (taskId: string) => void
+}
+
+const priorityStyles = {
+  high: 'bg-destructive/10 text-destructive border-destructive/20',
+  medium: 'bg-warning/10 text-warning-foreground border-warning/20',
+  low: 'bg-muted text-muted-foreground border-muted',
+}
+
+const subjectIcons: Record<string, string> = {
+  Mathematics: '#4f6bcc',
+  Physics: '#5ba3d9',
+  Chemistry: '#68c4b8',
+  English: '#95b8d1',
+}
+
+export function TaskCard({ task, onComplete }: TaskCardProps) {
+  const subjectColor = subjectIcons[task.subject] || '#4f6bcc'
+
+  return (
+    <Card
+      className={cn(
+        'relative overflow-hidden p-4 transition-all',
+        task.completed && 'opacity-60'
+      )}
+    >
+      <div
+        className="absolute left-0 top-0 h-full w-1"
+        style={{ backgroundColor: subjectColor }}
+      />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-1.5 pl-2">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs font-medium uppercase tracking-wide"
+              style={{ color: subjectColor }}
+            >
+              {task.subject}
+            </span>
+            <Badge
+              variant="outline"
+              className={cn('text-[10px] capitalize', priorityStyles[task.priority])}
+            >
+              {task.priority}
+            </Badge>
+          </div>
+          <h3 className="flex items-center gap-2 font-medium text-card-foreground">
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            {task.bookName}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            p{task.pageStart}–{task.pageEnd}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant={task.completed ? 'secondary' : 'default'}
+          className={cn(
+            'h-9 w-9 shrink-0 rounded-full p-0',
+            task.completed && 'bg-success text-success-foreground'
+          )}
+          onClick={() => onComplete(task.id)}
+          disabled={task.completed}
+        >
+          <Check className="h-4 w-4" />
+          <span className="sr-only">Complete task</span>
+        </Button>
+      </div>
+      {task.completed && task.studyTime && (
+        <div className="mt-2 flex items-center gap-1 pl-2 text-xs text-muted-foreground">
+          <span>Studied for {task.studyTime} minutes</span>
+        </div>
+      )}
+    </Card>
+  )
+}
