@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings, Star, Timer } from 'lucide-react'
+import { LogOut, Star, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/task-card'
 import { StudyTimeDialog } from '@/components/study-time-dialog'
 import { PomodoroTimer } from '@/components/pomodoro-timer'
 import type { StudyTask, UserProfile } from '@/lib/types'
+import {auth} from "@/lib/FirebaseConfig"
+import { signOut } from 'firebase/auth'
+import { Logout } from '@/lib/firebase/auth'
 
 interface HomeScreenProps {
   tasks: StudyTask[]
@@ -51,9 +54,14 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
             <Star className="h-4 w-4 fill-primary text-primary" />
             <span className="text-sm font-semibold text-primary">{user.totalPoints}</span>
           </div>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Settings className="h-5 w-5" />
-            <span className="sr-only">Settings</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-9 w-9 text-muted-foreground hover:text-destructive"
+            onClick={Logout}
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="sr-only">Logout</span>
           </Button>
         </div>
       </header>

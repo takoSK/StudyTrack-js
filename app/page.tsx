@@ -15,6 +15,7 @@ import {
   userProfile as initialUserProfile,
 } from '@/lib/study-data'
 import type { StudyTask, UserProfile } from '@/lib/types'
+import AuthGuard from '@/components/AuthGuard'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
@@ -55,6 +56,7 @@ export default function StudyApp() {
     : 0
 
   return (
+    <AuthGuard>
     <div className="mx-auto min-h-screen max-w-md bg-background">
       <main className="px-4 pt-6">
         {activeTab === 'home' && (
@@ -82,5 +84,6 @@ export default function StudyApp() {
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
+    </AuthGuard>
   )
 }
