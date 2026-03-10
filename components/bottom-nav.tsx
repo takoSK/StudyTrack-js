@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, ListTodo, BarChart3, Gift } from 'lucide-react'
+import { Home, ListTodo, BarChart3, Gift, Book } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface BottomNavProps {
@@ -11,6 +11,7 @@ interface BottomNavProps {
 const tabs = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'tasks', label: 'Tasks', icon: ListTodo },
+  { id: 'books', label: 'Books', icon: Book },
   { id: 'analysis', label: 'Analysis', icon: BarChart3 },
   { id: 'rewards', label: 'Rewards', icon: Gift },
 ]

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { BottomNav } from '@/components/bottom-nav'
 import { HomeScreen } from '@/components/screens/home-screen'
 import { TasksScreen } from '@/components/screens/tasks-screen'
+import { BooksScreen } from '@/components/screens/books-screen'
 import { AnalysisScreen } from '@/components/screens/analysis-screen'
 import { RewardsScreen } from '@/components/screens/rewards-screen'
 import {
@@ -14,13 +15,14 @@ import {
   subjectDistribution,
   userProfile as initialUserProfile,
 } from '@/lib/study-data'
-import type { StudyTask, UserProfile } from '@/lib/types'
+import type { StudyTask, UserProfile, StudyBook } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
   const [tasks, setTasks] = useState<StudyTask[]>(initialTasks)
   const [user, setUser] = useState<UserProfile>(initialUserProfile)
+  const [books, setBooks] = useState<StudyBook[]>(studyBooks)
 
   const handleCompleteTask = (taskId: string, studyTime: number) => {
     setTasks((prev) =>
@@ -50,7 +52,37 @@ export default function StudyApp() {
       // In a real app, this would trigger the reward
     }
   }
+  
 
+  const handleAddTask = (task: Omit<StudyTask, 'id' | 'completed'>) => {
+    const newTask: StudyTask = {
+      ...task,
+      id: `task-${Date.now()}`,
+      completed: false,
+    }
+    setTasks((prev) => [...prev, newTask])
+  }
+
+  const handleAddBook = (book: Omit<StudyBook, 'id' | 'weeklyPlan'>) => {
+    const newBook: StudyBook = {
+      ...book,
+      id: `book-${Date.now()}`,
+      weeklyPlan: [],
+    }
+    setBooks((prev) => [...prev, newBook])
+  }
+
+  const handleUpdateBook = (bookId: string, updates: Partial<StudyBook>) => {
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === bookId ? { ...book, ...updates } : book
+      )
+    )
+  }
+
+  const handleDeleteBook = (bookId: string) => {
+    setBooks((prev) => prev.filter((book) => book.id !== bookId))
+  }
   const completionRate = tasks.length > 0
     ? Math.round((tasks.filter((t) => t.completed).length / tasks.length) * 100)
     : 0
@@ -66,7 +98,21 @@ export default function StudyApp() {
             onCompleteTask={handleCompleteTask}
           />
         )}
-        {activeTab === 'tasks' && <TasksScreen books={studyBooks} />}
+        {activeTab === 'tasks' && (
+          <TasksScreen 
+            tasks={tasks}
+            onCompleteTask={handleCompleteTask}
+            onAddTask={handleAddTask}
+          />
+        )}
+        {activeTab === 'books' && (
+          <BooksScreen
+            books={books}
+            onAddBook={handleAddBook}
+            onUpdateBook={handleUpdateBook}
+            onDeleteBook={handleDeleteBook}
+          />
+        )}
         {activeTab === 'analysis' && (
           <AnalysisScreen
             studyStats={weeklyStudyStats}

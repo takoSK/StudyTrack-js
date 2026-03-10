@@ -7,7 +7,10 @@ export interface StudyTask {
   priority: 'high' | 'medium' | 'low'
   completed: boolean
   studyTime?: number
+  weekday?: Weekday
 }
+
+export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 export interface StudyBook {
   id: string

@@ -1,4 +1,4 @@
-import type { StudyTask, StudyBook, Reward, StudyStats, SubjectDistribution, UserProfile } from './types'
+import type { StudyTask, StudyBook, Reward, StudyStats, SubjectDistribution, UserProfile, Weekday } from './types'
 
 export const initialTasks: StudyTask[] = [
   {
@@ -9,6 +9,7 @@ export const initialTasks: StudyTask[] = [
     pageEnd: 30,
     priority: 'high',
     completed: false,
+    weekday: 'monday',
   },
   {
     id: '2',
@@ -18,6 +19,7 @@ export const initialTasks: StudyTask[] = [
     pageEnd: 52,
     priority: 'medium',
     completed: false,
+    weekday: 'monday',
   },
   {
     id: '3',
@@ -27,6 +29,7 @@ export const initialTasks: StudyTask[] = [
     pageEnd: 95,
     priority: 'low',
     completed: false,
+    weekday: 'tuesday',
   },
   {
     id: '4',
@@ -36,7 +39,128 @@ export const initialTasks: StudyTask[] = [
     pageEnd: 120,
     priority: 'medium',
     completed: false,
+    weekday: 'wednesday',
   },
+]
+
+// Weekly tasks data matching the specification
+export const weeklyTasks: StudyTask[] = [
+  // Monday
+  {
+    id: 'wt-1',
+    subject: 'Math',
+    bookName: 'Blue Chart',
+    pageStart: 45,
+    pageEnd: 50,
+    priority: 'high',
+    completed: true,
+    studyTime: 30,
+    weekday: 'monday',
+  },
+  {
+    id: 'wt-2',
+    subject: 'English',
+    bookName: 'Target 1900',
+    pageStart: 120,
+    pageEnd: 150,
+    priority: 'medium',
+    completed: false,
+    weekday: 'monday',
+  },
+  // Tuesday
+  {
+    id: 'wt-3',
+    subject: 'Physics',
+    bookName: 'Ryoumon no Kaze',
+    pageStart: 30,
+    pageEnd: 35,
+    priority: 'high',
+    completed: true,
+    studyTime: 45,
+    weekday: 'tuesday',
+  },
+  {
+    id: 'wt-4',
+    subject: 'Math',
+    bookName: 'Blue Chart',
+    pageStart: 51,
+    pageEnd: 60,
+    priority: 'medium',
+    completed: false,
+    weekday: 'tuesday',
+  },
+  // Wednesday
+  {
+    id: 'wt-5',
+    subject: 'Chemistry',
+    bookName: 'Kagaku no Shin Kenkyu',
+    pageStart: 80,
+    pageEnd: 95,
+    priority: 'low',
+    completed: false,
+    weekday: 'wednesday',
+  },
+  // Thursday
+  {
+    id: 'wt-6',
+    subject: 'English',
+    bookName: 'Target 1900',
+    pageStart: 151,
+    pageEnd: 180,
+    priority: 'high',
+    completed: true,
+    studyTime: 40,
+    weekday: 'thursday',
+  },
+  {
+    id: 'wt-7',
+    subject: 'Math',
+    bookName: 'Blue Chart',
+    pageStart: 61,
+    pageEnd: 70,
+    priority: 'medium',
+    completed: false,
+    weekday: 'thursday',
+  },
+  // Friday
+  {
+    id: 'wt-8',
+    subject: 'Physics',
+    bookName: 'Ryoumon no Kaze',
+    pageStart: 36,
+    pageEnd: 45,
+    priority: 'medium',
+    completed: false,
+    weekday: 'friday',
+  },
+  // Saturday
+  {
+    id: 'wt-9',
+    subject: 'Math',
+    bookName: 'Blue Chart',
+    pageStart: 71,
+    pageEnd: 85,
+    priority: 'high',
+    completed: false,
+    weekday: 'saturday',
+  },
+  {
+    id: 'wt-10',
+    subject: 'English',
+    bookName: 'Target 1900',
+    pageStart: 181,
+    pageEnd: 200,
+    priority: 'low',
+    completed: false,
+    weekday: 'saturday',
+  },
+]
+
+export const availableBooks = [
+  { id: 'b1', name: 'Blue Chart', subject: 'Math' },
+  { id: 'b2', name: 'Target 1900', subject: 'English' },
+  { id: 'b3', name: 'Ryoumon no Kaze', subject: 'Physics' },
+  { id: 'b4', name: 'Kagaku no Shin Kenkyu', subject: 'Chemistry' },
 ]
 
 export const studyBooks: StudyBook[] = [
