@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { auth } from '@/lib/FirebaseConfig'
 import { Book, Plus, Pencil, Trash2, Target, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import type { StudyBook } from '@/lib/types'
+import { addBook } from '@/lib/firebase/firestoreClient'
 
 interface BooksScreenProps {
   books: StudyBook[]
@@ -42,17 +44,15 @@ interface BooksScreenProps {
   onDeleteBook: (bookId: string) => void
 }
 
-const subjects = ['Mathematics', 'Physics', 'Chemistry', 'English', 'Biology', 'History', 'Geography']
+const subjects = ['Mathematics', 'English', 'Physics', 'Chemistry', 'Japanese', 'Social']
 
 const subjectColors: Record<string, string> = {
   Mathematics: 'bg-blue-100 text-blue-700',
+  English: 'bg-violet-100 text-violet-700',
   Physics: 'bg-cyan-100 text-cyan-700',
   Chemistry: 'bg-emerald-100 text-emerald-700',
-  English: 'bg-violet-100 text-violet-700',
-  Biology: 'bg-green-100 text-green-700',
-  History: 'bg-amber-100 text-amber-700',
-  Geography: 'bg-orange-100 text-orange-700',
-  Math: 'bg-blue-100 text-blue-700',
+  Japanese: 'bg-orange-100 text-orange-700',
+  Social: 'bg-amber-100 text-amber-700',
 }
 
 export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: BooksScreenProps) {
@@ -73,6 +73,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
 
   const handleAddBook = () => {
     if (newBook.name && newBook.subject && newBook.totalPages > 0) {
+      const user = auth.currentUser
       onAddBook(newBook)
       setNewBook({
         name: '',
@@ -81,6 +82,10 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
         completedPages: 0,
         monthlyTarget: 0,
       })
+      if (user) {
+        addBook(user.uid, newBook)
+        console.log("Book added to Firestore for user:", user.uid)
+      }
       setIsAddDialogOpen(false)
     }
   }
