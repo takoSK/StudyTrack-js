@@ -170,55 +170,7 @@ export const studyBooks: StudyBook[] = [
     subject: 'Mathematics',
     totalPages: 320,
     completedPages: 85,
-    monthlyTarget: 80,
-    weeklyPlan: [
-      { week: 1, pageStart: 86, pageEnd: 105 },
-      { week: 2, pageStart: 106, pageEnd: 125 },
-      { week: 3, pageStart: 126, pageEnd: 145 },
-      { week: 4, pageStart: 146, pageEnd: 165 },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Mechanics & Waves',
-    subject: 'Physics',
-    totalPages: 280,
-    completedPages: 120,
-    monthlyTarget: 60,
-    weeklyPlan: [
-      { week: 1, pageStart: 121, pageEnd: 135 },
-      { week: 2, pageStart: 136, pageEnd: 150 },
-      { week: 3, pageStart: 151, pageEnd: 165 },
-      { week: 4, pageStart: 166, pageEnd: 180 },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Organic Chemistry',
-    subject: 'Chemistry',
-    totalPages: 400,
-    completedPages: 200,
-    monthlyTarget: 100,
-    weeklyPlan: [
-      { week: 1, pageStart: 201, pageEnd: 225 },
-      { week: 2, pageStart: 226, pageEnd: 250 },
-      { week: 3, pageStart: 251, pageEnd: 275 },
-      { week: 4, pageStart: 276, pageEnd: 300 },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Grammar Fundamentals',
-    subject: 'English',
-    totalPages: 180,
-    completedPages: 95,
-    monthlyTarget: 40,
-    weeklyPlan: [
-      { week: 1, pageStart: 96, pageEnd: 105 },
-      { week: 2, pageStart: 106, pageEnd: 115 },
-      { week: 3, pageStart: 116, pageEnd: 125 },
-      { week: 4, pageStart: 126, pageEnd: 135 },
-    ],
+    monthlyTarget: 80
   },
 ]
 
@@ -278,6 +230,7 @@ export const subjectDistribution: SubjectDistribution[] = [
 ]
 
 export const userProfile: UserProfile = {
+  id: 'user-1',
   name: 'Alex',
   totalPoints: 450,
   tasksCompleted: 42,

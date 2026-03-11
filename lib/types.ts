@@ -19,7 +19,6 @@ export interface StudyBook {
   totalPages: number
   completedPages: number
   monthlyTarget: number
-  weeklyPlan: WeeklyPlan[]
 }
 
 export interface WeeklyPlan {
@@ -48,6 +47,7 @@ export interface SubjectDistribution {
 }
 
 export interface UserProfile {
+  id: string
   name: string
   totalPoints: number
   tasksCompleted: number

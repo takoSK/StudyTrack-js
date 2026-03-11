@@ -8,8 +8,6 @@ import { BooksScreen } from '@/components/screens/books-screen'
 import { AnalysisScreen } from '@/components/screens/analysis-screen'
 import { RewardsScreen } from '@/components/screens/rewards-screen'
 import {
-  initialTasks,
-  studyBooks,
   rewards,
   weeklyStudyStats,
   subjectDistribution,
@@ -17,12 +15,40 @@ import {
 } from '@/lib/study-data'
 import type { StudyTask, UserProfile, StudyBook } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
+import {auth } from "@/lib/FirebaseConfig"
+import { useEffect } from 'react'
+import { getUserProfile, getTasks, getBooks, deleteBook, updateBook, addBook } from '@/lib/firebase/firestoreClient'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
-  const [tasks, setTasks] = useState<StudyTask[]>(initialTasks)
-  const [user, setUser] = useState<UserProfile>(initialUserProfile)
-  const [books, setBooks] = useState<StudyBook[]>(studyBooks)
+  const [tasks, setTasks] = useState<StudyTask[]>([])
+  const [books, setBooks] = useState<StudyBook[]>([])
+  const [user, setUser] = useState<UserProfile>({
+  id: 'user-1',
+  name: "",
+  totalPoints: 0,
+  tasksCompleted: 0,
+  totalStudyMinutes: 0
+  })
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (!firebaseUser) return
+
+      const userId = firebaseUser.uid
+      const [profile, tasksData, booksData] = await Promise.all([
+      getUserProfile(userId),
+      getTasks(userId),
+      getBooks(userId)
+    ])
+    
+      setUser(profile ?? initialUserProfile)
+      setTasks(tasksData)
+      setBooks(booksData)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const handleCompleteTask = (taskId: string, studyTime: number) => {
     setTasks((prev) =>
@@ -32,14 +58,6 @@ export default function StudyApp() {
           : task
       )
     )
-    // Add points based on study time (1 point per 5 minutes, minimum 5)
-    const pointsEarned = Math.max(5, Math.floor(studyTime / 5) * 5)
-    setUser((prev) => ({
-      ...prev,
-      totalPoints: prev.totalPoints + pointsEarned,
-      tasksCompleted: prev.tasksCompleted + 1,
-      totalStudyMinutes: prev.totalStudyMinutes + studyTime,
-    }))
   }
 
   const handleRedeemReward = (rewardId: string) => {
@@ -63,16 +81,21 @@ export default function StudyApp() {
     setTasks((prev) => [...prev, newTask])
   }
 
-  const handleAddBook = (book: Omit<StudyBook, 'id' | 'weeklyPlan'>) => {
-    const newBook: StudyBook = {
-      ...book,
-      id: `book-${Date.now()}`,
-      weeklyPlan: [],
-    }
-    setBooks((prev) => [...prev, newBook])
+  const handleAddBook = async (book: Omit<StudyBook, 'id'>) => {
+
+    const user = auth.currentUser
+    if (!user) return
+
+    const createdBook = await addBook(user.uid, book)
+
+    setBooks((prev) => [...prev, createdBook])
   }
 
-  const handleUpdateBook = (bookId: string, updates: Partial<StudyBook>) => {
+  const handleUpdateBook = async (bookId: string, updates: Partial<StudyBook>) => {
+    const user = auth.currentUser
+    if (!user) return
+    await updateBook(user.uid, bookId, updates)
+
     setBooks((prev) =>
       prev.map((book) =>
         book.id === bookId ? { ...book, ...updates } : book
@@ -80,7 +103,10 @@ export default function StudyApp() {
     )
   }
 
-  const handleDeleteBook = (bookId: string) => {
+  const handleDeleteBook = async (bookId: string) => {
+    const user = auth.currentUser
+    if (!user) return
+    await deleteBook(user.uid, bookId)
     setBooks((prev) => prev.filter((book) => book.id !== bookId))
   }
   const completionRate = tasks.length > 0

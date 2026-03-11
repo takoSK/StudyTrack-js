@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { StudyBook } from '@/lib/types'
 import { addBook } from '@/lib/firebase/firestoreClient'
+import { on } from 'events'
 
 interface BooksScreenProps {
   books: StudyBook[]
@@ -74,7 +75,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
   const handleAddBook = () => {
     if (newBook.name && newBook.subject && newBook.totalPages > 0) {
       const user = auth.currentUser
-      onAddBook(newBook)
       setNewBook({
         name: '',
         subject: '',
@@ -83,7 +83,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
         monthlyTarget: 0,
       })
       if (user) {
-        addBook(user.uid, newBook)
+        onAddBook(newBook)
         console.log("Book added to Firestore for user:", user.uid)
       }
       setIsAddDialogOpen(false)
