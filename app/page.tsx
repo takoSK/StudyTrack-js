@@ -11,20 +11,20 @@ import {
   rewards,
   weeklyStudyStats,
   subjectDistribution,
-  userProfile as initialUserProfile,
 } from '@/lib/study-data'
-import type { StudyTask, UserProfile, StudyBook, WeeklyTask } from '@/lib/types'
+import type { DailyTask, UserProfile, StudyBook, WeeklyTask } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { getUserProfile, deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask } from '@/lib/firebase/firestoreClient'
+import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks } from '@/lib/firebase/firestoreClient'
 import { onSnapshot, collection, doc } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import { PlanScreen } from '@/components/screens/plan-screen'
+import { distributeTasks } from '@/lib/TasksUtil'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
-  const [tasks, setTasks] = useState<StudyTask[]>([])
+  const [tasks, setTasks] = useState<DailyTask[]>([])
   const [books, setBooks] = useState<StudyBook[]>([])
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTask[]>([])
   const [user, setUser] = useState<UserProfile>({
@@ -172,6 +172,23 @@ export default function StudyApp() {
     ? Math.round((tasks.filter((t) => t.completed).length / tasks.length) * 100)
     : 0
 
+  const handleGenerateDailyTasks = (weekId: string, date: Date[], weights: number[]) => {
+    console.log("Generating daily tasks for week:", weekId)
+    const weeklytasks = weeklyTasks.filter(task => task.weekId === weekId)
+    const distributedTasks = distributeTasks(weeklytasks, date, weights)
+    console.log(distributedTasks)
+    addDailyTasks(user.id,distributedTasks)
+  }
+
+  const handleAddTask = (task: Omit<DailyTask, 'id' | 'completed' | 'studyTime'>) => {
+    const newTask: DailyTask = {
+      id: `task-${Date.now()}`,
+      completed: false,
+      ...task,
+    }
+    setTasks((prev) => [...prev, newTask])
+  }
+
   return (
     <AuthGuard>
     <div className="mx-auto min-h-screen max-w-md bg-background">
@@ -183,6 +200,13 @@ export default function StudyApp() {
             onCompleteTask={handleCompleteTask}
           />
         )}
+        {activeTab === 'tasks' && (
+          <TasksScreen
+            tasks={tasks}
+            onCompleteTask={handleCompleteTask}
+            onAddTask={handleAddTask}
+          />
+        )}
         {activeTab === 'plans' && (
           <PlanScreen
             books={books}
@@ -190,6 +214,7 @@ export default function StudyApp() {
             onAddWeeklyTask={handleAddWeeklyTask}
             onUpdateWeeklyTask={handleUpdateWeeklyTask}
             onDeleteWeeklyTask={handleDeleteWeeklyTask}
+            onGenerateDailyTasks={handleGenerateDailyTasks}
           />  
         )}
         {activeTab === 'books' && (

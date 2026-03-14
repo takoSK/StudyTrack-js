@@ -27,13 +27,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { StudyTask, Weekday } from '@/lib/types'
+import type { DailyTask, Weekday } from '@/lib/types'
 import { availableBooks } from '@/lib/study-data'
 
 interface TasksScreenProps {
-  tasks: StudyTask[]
+  tasks: DailyTask[]
   onCompleteTask: (taskId: string, studyTime: number) => void
-  onAddTask: (task: Omit<StudyTask, 'id' | 'completed'>) => void
+  onAddTask: (task: Omit<DailyTask, 'id' | 'completed'>) => void
 }
 
 const WEEKDAYS: { key: Weekday; label: string }[] = [
@@ -89,7 +89,7 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
   const weekRange = getWeekRange(weekOffset)
 
   const tasksByDay = useMemo(() => {
-    const grouped: Record<Weekday, StudyTask[]> = {
+    const grouped: Record<Weekday, DailyTask[]> = {
       monday: [],
       tuesday: [],
       wednesday: [],
@@ -115,15 +115,6 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
   const handleSaveTask = () => {
     const selectedBook = availableBooks.find((b) => b.id === newTask.bookId)
     if (!selectedBook || !newTask.pageStart || !newTask.pageEnd) return
-
-    onAddTask({
-      subject: selectedBook.subject,
-      bookName: selectedBook.name,
-      pageStart: parseInt(newTask.pageStart, 10),
-      pageEnd: parseInt(newTask.pageEnd, 10),
-      weekday: newTask.weekday,
-      priority: newTask.priority,
-    })
 
     setNewTask({
       bookId: '',

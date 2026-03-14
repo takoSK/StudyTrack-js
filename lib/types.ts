@@ -1,13 +1,13 @@
-export interface StudyTask {
+export interface DailyTask {
   id: string
-  subject: string
+  weekId: string
+  weeklyTaskId: string
+  bookId: string
   bookName: string
   pageStart: number
   pageEnd: number
-  priority: 'high' | 'medium' | 'low'
+  priority: string
   completed: boolean
-  studyTime?: number
-  weekday?: Weekday
 }
 
 export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
@@ -54,15 +54,6 @@ export interface UserProfile {
   totalStudyMinutes: number
 }
 
-
-export interface MidTermPlan {
-  id: string
-  name: string
-  startDate: string
-  endDate: string
-  textbookRanges: TextbookRange[]
-}
-
 export interface TextbookRange {
   id: string
   bookId: string
@@ -79,7 +70,5 @@ export interface WeeklyTask {
   bookName: string
   startPage: number
   endPage: number
-  points: number
+  priority: string
 }
-
-export type DistributionMethod = 'even' | 'study-time' | 'custom'

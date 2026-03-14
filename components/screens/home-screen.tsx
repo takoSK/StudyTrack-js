@@ -6,20 +6,18 @@ import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/task-card'
 import { StudyTimeDialog } from '@/components/study-time-dialog'
 import { PomodoroTimer } from '@/components/pomodoro-timer'
-import type { StudyTask, UserProfile } from '@/lib/types'
-import {auth} from "@/lib/FirebaseConfig"
-import { signOut } from 'firebase/auth'
+import type { DailyTask, UserProfile } from '@/lib/types'
 import { Logout } from '@/lib/firebase/auth'
 
 interface HomeScreenProps {
-  tasks: StudyTask[]
+  tasks: DailyTask[]
   user: UserProfile
   onCompleteTask: (taskId: string, studyTime: number) => void
 }
 
 export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<StudyTask | null>(null)
+  const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
   const [pomodoroOpen, setPomodoroOpen] = useState(false)
 
   const todaysTasks = tasks.filter((t) => !t.completed)

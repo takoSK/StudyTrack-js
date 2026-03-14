@@ -1,6 +1,6 @@
-import {collection,addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc} from 'firebase/firestore'
+import {collection,addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, writeBatch} from 'firebase/firestore'
 import { db } from '../FirebaseConfig'
-import { StudyBook, UserProfile, WeeklyTask } from '../types'; 
+import { DailyTask, StudyBook, UserProfile, WeeklyTask } from '../types'; 
 
 export async function addBook(userId: string, book: Omit<StudyBook, "id">) {
   const docRef = await addDoc(
@@ -32,6 +32,8 @@ export async function deleteBook(userId: string, bookId: string) {
   }
 }
 
+
+
 export async function addWeeklyTask(userId: string, weeklyTask: Omit<WeeklyTask, "id">) {
   const docRef = await addDoc(
     collection(db, "users", userId, "weeklyTasks"),
@@ -61,6 +63,56 @@ export async function deleteWeeklyTask(userId: string, taskId: string) {
     console.error("Error deleting weekly task: ", error);
   }
 }
+
+
+
+export async function addDailyTask(userId: string, dailyTask: Omit<DailyTask, "id">) {
+  const docRef = await addDoc(
+    collection(db, "users", userId, "dailyTasks"),
+    dailyTask
+  )
+
+  return {
+    id: docRef.id,
+    ...dailyTask,
+  }
+}
+
+export async function addDailyTasks(
+  userId: string,
+  dailyTasks: Omit<DailyTask, "id">[]
+) {
+  const batch = writeBatch(db)
+
+  for (const task of dailyTasks) {
+    const docRef = doc(
+      collection(db, "users", userId, "dailyTasks")
+    )
+
+    batch.set(docRef, task)
+  }
+
+  await batch.commit()
+}
+
+export async function updateDailytask(userId: string, taskId: string, updatedData: Partial<DailyTask>) {
+  try {
+    const dailyTaskRef = doc(db, "users", userId, "dailyTasks", taskId);
+    await updateDoc(dailyTaskRef, updatedData);
+  } catch (error) {
+    console.error("Error updating daily task: ", error);
+  }
+}
+
+export async function deleteDailyTask(userId: string, taskId: string) {
+  try {
+    await deleteDoc(doc(db, "users", userId, "dailyTasks", taskId));
+  } catch (error) {
+    console.error("Error deleting daily task: ", error);
+  }
+}
+
+
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
 

@@ -48,12 +48,12 @@ interface BooksScreenProps {
 const subjects = ['Mathematics', 'English', 'Physics', 'Chemistry', 'Japanese', 'Social']
 
 const subjectColors: Record<string, string> = {
-  Mathematics: 'bg-blue-100 text-blue-700',
-  English: 'bg-violet-100 text-violet-700',
-  Physics: 'bg-cyan-100 text-cyan-700',
-  Chemistry: 'bg-emerald-100 text-emerald-700',
-  Japanese: 'bg-orange-100 text-orange-700',
-  Social: 'bg-amber-100 text-amber-700',
+  Mathematics: "bg-blue-100 text-blue-700",
+  English: "bg-purple-100 text-purple-700",
+  Physics: "bg-sky-100 text-sky-700",
+  Chemistry: "bg-emerald-100 text-emerald-700",
+  Japanese: "bg-rose-100 text-rose-700",
+  Social: "bg-amber-100 text-amber-700",
 }
 
 export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: BooksScreenProps) {
