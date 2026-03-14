@@ -84,7 +84,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
       })
       if (user) {
         onAddBook(newBook)
-        console.log("Book added to Firestore for user:", user.uid)
       }
       setIsAddDialogOpen(false)
     }

@@ -1,6 +1,6 @@
 import {collection,addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc} from 'firebase/firestore'
 import { db } from '../FirebaseConfig'
-import { StudyBook, StudyTask, UserProfile } from '../types'; 
+import { StudyBook, UserProfile, WeeklyTask } from '../types'; 
 
 export async function addBook(userId: string, book: Omit<StudyBook, "id">) {
   const docRef = await addDoc(
@@ -11,19 +11,6 @@ export async function addBook(userId: string, book: Omit<StudyBook, "id">) {
   return {
     id: docRef.id,
     ...book,
-  }
-}
-
-export async function getBooks(userId: string): Promise<StudyBook[]>{
-  try {
-    const snapshot = await getDocs(collection(db, "users", userId, "books"));
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data() as Omit<StudyBook, 'id'>
-    }));
-  } catch (error) {
-    console.error("Error fetching books: ", error);
-    return [];
   }
 }
 
@@ -45,16 +32,34 @@ export async function deleteBook(userId: string, bookId: string) {
   }
 }
 
-export async function getTasks(userId: string): Promise<StudyTask[]> {
+export async function addWeeklyTask(userId: string, weeklyTask: Omit<WeeklyTask, "id">) {
+  const docRef = await addDoc(
+    collection(db, "users", userId, "weeklyTasks"),
+    weeklyTask
+  );
 
-  const snapshot = await getDocs(
-    collection(db, "users", userId, "tasks")
-  )
+  return {
+    id: docRef.id,
+    ...weeklyTask,
+  };
+}
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data() as Omit<StudyTask, 'id'>
-  }))
+export async function updateWeeklyTask(userId: string, taskId: string, updatedData: Partial<WeeklyTask>) {
+  try {
+    const weeklyTaskRef = doc(db, "users", userId, "weeklyTasks", taskId);
+    await updateDoc(weeklyTaskRef, updatedData);
+    console.log("Weekly task updated in Firestore for user:", userId);
+  } catch (error) {
+    console.error("Error updating weekly task: ", error);
+  }
+}
+
+export async function deleteWeeklyTask(userId: string, taskId: string) {
+  try {
+    await deleteDoc(doc(db, "users", userId, "weeklyTasks", taskId)); 
+  } catch (error) {
+    console.error("Error deleting weekly task: ", error);
+  }
 }
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {

@@ -13,16 +13,20 @@ import {
   subjectDistribution,
   userProfile as initialUserProfile,
 } from '@/lib/study-data'
-import type { StudyTask, UserProfile, StudyBook } from '@/lib/types'
+import type { StudyTask, UserProfile, StudyBook, WeeklyTask } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { getUserProfile, getTasks, getBooks, deleteBook, updateBook, addBook } from '@/lib/firebase/firestoreClient'
+import { getUserProfile, deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask } from '@/lib/firebase/firestoreClient'
+import { onSnapshot, collection, doc } from 'firebase/firestore'
+import { db } from '@/lib/FirebaseConfig'
+import { PlanScreen } from '@/components/screens/plan-screen'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
   const [tasks, setTasks] = useState<StudyTask[]>([])
   const [books, setBooks] = useState<StudyBook[]>([])
+  const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTask[]>([])
   const [user, setUser] = useState<UserProfile>({
   id: 'user-1',
   name: "",
@@ -32,23 +36,63 @@ export default function StudyApp() {
   })
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      if (!firebaseUser) return
+  let unsubscribeProfile: () => void
+  let unsubscribeBooks: (() => void) | undefined
+  let unsubscribeWeeklyTasks: (() => void) | undefined
 
-      const userId = firebaseUser.uid
-      const [profile, tasksData, booksData] = await Promise.all([
-      getUserProfile(userId),
-      getTasks(userId),
-      getBooks(userId)
-    ])
-    
-      setUser(profile ?? initialUserProfile)
-      setTasks(tasksData)
-      setBooks(booksData)
-    })
+  const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
+    if (!firebaseUser) return
 
-    return () => unsubscribe()
-  }, [])
+    const userId = firebaseUser.uid
+
+    unsubscribeProfile = onSnapshot(
+      doc(db, "users", userId),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const profileData = docSnap.data() as Omit<UserProfile, "id">
+          setUser({
+            id: docSnap.id,
+            ...profileData
+          })
+        }
+      }
+    )
+
+    unsubscribeBooks = onSnapshot(
+      collection(db, "users", userId, "books"),
+      (snapshot) => {
+        const books = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as StudyBook[]
+
+        setBooks(books)
+      }
+    )
+
+    unsubscribeWeeklyTasks = onSnapshot(
+      collection(db, "users", userId, "weeklyTasks"),
+      (snapshot) => {
+        const weeklyTasks = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as WeeklyTask[]
+
+        setWeeklyTasks(weeklyTasks)
+        console.log("Weekly tasks updated for user:", userId, weeklyTasks)
+      }
+    )
+
+    console.log("User authenticated with ID:", userId)
+  })
+
+  return () => {
+    unsubscribeAuth()
+    unsubscribeBooks?.()
+    unsubscribeWeeklyTasks?.()
+    unsubscribeProfile?.()
+  }
+}, [])
 
   const handleCompleteTask = (taskId: string, studyTime: number) => {
     setTasks((prev) =>
@@ -72,13 +116,30 @@ export default function StudyApp() {
   }
   
 
-  const handleAddTask = (task: Omit<StudyTask, 'id' | 'completed'>) => {
-    const newTask: StudyTask = {
-      ...task,
-      id: `task-${Date.now()}`,
-      completed: false,
-    }
-    setTasks((prev) => [...prev, newTask])
+  const handleAddWeeklyTask = async (task: Omit<WeeklyTask, 'id'>) => {
+    const user = auth.currentUser
+    if (!user) return
+
+    await addWeeklyTask(user.uid, task)
+  }
+
+  const handleUpdateWeeklyTask = async (taskId: string, updates: Partial<WeeklyTask>) => {
+    const user = auth.currentUser
+    if (!user) return
+    await updateWeeklyTask(user.uid, taskId, updates)
+
+    setWeeklyTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId ? { ...task, ...updates } : task
+      )
+    )
+  }
+
+  const handleDeleteWeeklyTask = async (taskId: string) => {
+    const user = auth.currentUser
+    if (!user) return
+    await deleteWeeklyTask(user.uid, taskId)
+    setWeeklyTasks((prev) => prev.filter((task) => task.id !== taskId))
   }
 
   const handleAddBook = async (book: Omit<StudyBook, 'id'>) => {
@@ -86,9 +147,7 @@ export default function StudyApp() {
     const user = auth.currentUser
     if (!user) return
 
-    const createdBook = await addBook(user.uid, book)
-
-    setBooks((prev) => [...prev, createdBook])
+    await addBook(user.uid, book)
   }
 
   const handleUpdateBook = async (bookId: string, updates: Partial<StudyBook>) => {
@@ -124,12 +183,14 @@ export default function StudyApp() {
             onCompleteTask={handleCompleteTask}
           />
         )}
-        {activeTab === 'tasks' && (
-          <TasksScreen 
-            tasks={tasks}
-            onCompleteTask={handleCompleteTask}
-            onAddTask={handleAddTask}
-          />
+        {activeTab === 'plans' && (
+          <PlanScreen
+            books={books}
+            weeklyTasks={weeklyTasks}
+            onAddWeeklyTask={handleAddWeeklyTask}
+            onUpdateWeeklyTask={handleUpdateWeeklyTask}
+            onDeleteWeeklyTask={handleDeleteWeeklyTask}
+          />  
         )}
         {activeTab === 'books' && (
           <BooksScreen

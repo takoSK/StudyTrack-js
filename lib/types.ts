@@ -53,3 +53,33 @@ export interface UserProfile {
   tasksCompleted: number
   totalStudyMinutes: number
 }
+
+
+export interface MidTermPlan {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+  textbookRanges: TextbookRange[]
+}
+
+export interface TextbookRange {
+  id: string
+  bookId: string
+  bookName: string
+  subject: string
+  startPage: number
+  endPage: number
+}
+
+export interface WeeklyTask {
+  id: string
+  weekId: string
+  bookId: string
+  bookName: string
+  startPage: number
+  endPage: number
+  points: number
+}
+
+export type DistributionMethod = 'even' | 'study-time' | 'custom'
