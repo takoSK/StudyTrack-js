@@ -5,17 +5,11 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { StudyTask } from '@/lib/types'
+import type { DailyTask } from '@/lib/types'
 
 interface TaskCardProps {
-  task: StudyTask
+  task: DailyTask
   onComplete: (taskId: string) => void
-}
-
-const priorityStyles = {
-  high: 'bg-destructive/10 text-destructive border-destructive/20',
-  medium: 'bg-warning/10 text-warning-foreground border-warning/20',
-  low: 'bg-muted text-muted-foreground border-muted',
 }
 
 const subjectIcons: Record<string, string> = {
@@ -50,7 +44,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
             </span>
             <Badge
               variant="outline"
-              className={cn('text-[10px] capitalize', priorityStyles[task.priority])}
+              className={cn('text-[10px] capitalize')}
             >
               {task.priority}
             </Badge>
@@ -77,11 +71,6 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           <span className="sr-only">Complete task</span>
         </Button>
       </div>
-      {task.completed && task.studyTime && (
-        <div className="mt-2 flex items-center gap-1 pl-2 text-xs text-muted-foreground">
-          <span>Studied for {task.studyTime} minutes</span>
-        </div>
-      )}
     </Card>
   )
 }

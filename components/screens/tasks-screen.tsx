@@ -10,7 +10,6 @@ import {
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import {
@@ -27,16 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { DailyTask, Weekday } from '@/lib/types'
-import { availableBooks } from '@/lib/study-data'
+import type { DailyTask, Day, StudyBook } from '@/lib/types'
+import { TaskCard } from '../task-card'
+import { StudyTimeDialog } from '../study-time-dialog'
 
 interface TasksScreenProps {
+  books: StudyBook[]
   tasks: DailyTask[]
   onCompleteTask: (taskId: string, studyTime: number) => void
   onAddTask: (task: Omit<DailyTask, 'id' | 'completed'>) => void
 }
 
-const WEEKDAYS: { key: Weekday; label: string }[] = [
+const WEEKDAYS: { key: Day; label: string }[] = [
   { key: 'monday', label: 'Monday' },
   { key: 'tuesday', label: 'Tuesday' },
   { key: 'wednesday', label: 'Wednesday' },
@@ -69,27 +70,43 @@ function getWeekRange(weekOffset: number): { start: Date; end: Date; label: stri
   }
 }
 
-const priorityStyles: Record<string, string> = {
-  high: 'bg-destructive/10 text-destructive border-destructive/20',
-  medium: 'bg-warning/10 text-warning-foreground border-warning/20',
-  low: 'bg-muted text-muted-foreground border-border',
+function getWeekDays(weekOffset: number) {
+  const today = new Date()
+
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - today.getDay() + 1 + (weekOffset-1) * 7)
+
+  const days: Date[] = []
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(monday)
+    day.setDate(monday.getDate() + i)
+    days.push(day)
+  }
+
+  return days
 }
 
-export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenProps) {
+export function TasksScreen({ books, tasks, onCompleteTask }: TasksScreenProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
   const [weekOffset, setWeekOffset] = useState(0)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date())
   const [newTask, setNewTask] = useState({
     bookId: '',
     pageStart: '',
     pageEnd: '',
-    weekday: 'monday' as Weekday,
+    weekday: 'monday' as Day,
     priority: 'medium' as 'high' | 'medium' | 'low',
   })
 
   const weekRange = getWeekRange(weekOffset)
 
+  const weekDays = getWeekDays(weekOffset)
+
   const tasksByDay = useMemo(() => {
-    const grouped: Record<Weekday, DailyTask[]> = {
+    const grouped: Record<Day, DailyTask[]> = {
       monday: [],
       tuesday: [],
       wednesday: [],
@@ -99,11 +116,11 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
       sunday: [],
     }
     
-    tasks.forEach((task) => {
+    /*tasks.forEach((task) => {
       if (task.weekday) {
         grouped[task.weekday].push(task)
       }
-    })
+    })*/
     
     return grouped
   }, [tasks])
@@ -112,9 +129,35 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
   const totalCount = tasks.length
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
+  const selectedDayTasks = tasks.filter((task) => {
+    const taskDate =
+    task.date instanceof Date
+      ? task.date
+      : task.date.toDate()
+
+    return (
+      taskDate.toDateString() ===
+      selectedDay.toDateString()
+    )
+  })
+
+  const handleTaskComplete = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId)
+    if (task) {
+      setSelectedTask(task)
+      setDialogOpen(true)
+    }
+  }
+
+  const handleConfirmTime = (minutes: number) => {
+    if (selectedTask) {
+      onCompleteTask(selectedTask.id, minutes)
+      setDialogOpen(false)
+      setSelectedTask(null)
+    }
+  }
+
   const handleSaveTask = () => {
-    const selectedBook = availableBooks.find((b) => b.id === newTask.bookId)
-    if (!selectedBook || !newTask.pageStart || !newTask.pageEnd) return
 
     setNewTask({
       bookId: '',
@@ -124,11 +167,6 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
       priority: 'medium',
     })
     setIsDialogOpen(false)
-  }
-
-  const handleComplete = (taskId: string) => {
-    // Default to 30 minutes study time
-    onCompleteTask(taskId, 30)
   }
 
   return (
@@ -152,26 +190,59 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
       </header>
 
       {/* Week Navigation */}
-      <Card className="flex items-center justify-between p-3">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={() => setWeekOffset((prev) => prev - 1)}
-        >
-          <ChevronLeft className="h-5 w-5" />
-          <span className="sr-only">Previous week</span>
-        </Button>
-        <p className="font-medium text-foreground">{weekRange.label}</p>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={() => setWeekOffset((prev) => prev + 1)}
-        >
-          <ChevronRight className="h-5 w-5" />
-          <span className="sr-only">Next week</span>
-        </Button>
+      <Card className="p-3">
+        <div className="flex justify-between items-center mb-2">
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setWeekOffset((prev) => prev - 1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          <p className="font-medium">{weekRange.label}</p>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setWeekOffset((prev) => prev + 1)}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+
+        </div>
+
+        <div className="grid grid-cols-7 gap-2">
+
+          {weekDays.map((day) => {
+
+            const isSelected =
+              day.toDateString() === selectedDay.toDateString()
+
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => setSelectedDay(day)}
+                className={`flex flex-col items-center p-2 rounded-lg text-sm
+                  ${isSelected
+                    ? "bg-primary text-white"
+                    : "bg-muted hover:bg-muted/70"
+                  }
+                `}
+              >
+                <span>
+                  {day.toLocaleDateString("en-US", { weekday: "short" })}
+                </span>
+
+                <span className="text-lg font-semibold">
+                  {day.getDate()}
+                </span>
+              </button>
+            )
+          })}
+
+        </div>
       </Card>
 
       {/* Weekly Progress */}
@@ -187,65 +258,19 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
 
       {/* Weekly Task List */}
       <div className="space-y-4">
-        {WEEKDAYS.map(({ key, label }) => {
-          const dayTasks = tasksByDay[key]
-          if (dayTasks.length === 0) return null
-
-          return (
-            <section key={key}>
-              <h2 className="mb-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                {label}
-              </h2>
-              <div className="space-y-2">
-                {dayTasks.map((task) => (
-                  <Card
-                    key={task.id}
-                    className={`flex items-center gap-3 p-3 transition-all hover:shadow-sm ${
-                      task.completed ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <BookOpen className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">{task.subject}</p>
-                      <p className="font-medium text-card-foreground truncate">
-                        {task.bookName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        p{task.pageStart} - p{task.pageEnd}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs ${priorityStyles[task.priority]}`}
-                      >
-                        {task.priority}
-                      </Badge>
-                      {task.completed ? (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Check className="h-4 w-4 text-success" />
-                          <span>{task.studyTime} min</span>
-                        </div>
-                      ) : (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-success hover:bg-success/10"
-                          onClick={() => handleComplete(task.id)}
-                        >
-                          <Check className="h-4 w-4" />
-                          <span className="sr-only">Complete task</span>
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          )
-        })}
+        {selectedDayTasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center">
+            この日のタスクはありません
+          </p>
+        ) : (
+          selectedDayTasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onComplete={handleTaskComplete}
+            />
+          ))
+        )}
       </div>
 
       {/* Add Task Dialog */}
@@ -260,15 +285,15 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
               <label className="text-sm font-medium text-foreground">Select Book</label>
               <Select
                 value={newTask.bookId}
-                onValueChange={(value) => setNewTask({ ...newTask, bookId: value })}
+                onValueChange={(v) => setNewTask((prev) => ({ ...prev, bookId: v }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a book" />
+                  <SelectValue placeholder="Choose a textbook" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableBooks.map((book) => (
+                  {books.map((book) => (
                     <SelectItem key={book.id} value={book.id}>
-                      {book.name} ({book.subject})
+                      {book.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -302,7 +327,7 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
               <label className="text-sm font-medium text-foreground">Weekday</label>
               <Select
                 value={newTask.weekday}
-                onValueChange={(value) => setNewTask({ ...newTask, weekday: value as Weekday })}
+                onValueChange={(value) => setNewTask({ ...newTask, weekday: value as Day })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -345,6 +370,14 @@ export function TasksScreen({ tasks, onCompleteTask, onAddTask }: TasksScreenPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Study Time Dialog */}
+      <StudyTimeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onConfirm={handleConfirmTime}
+        taskName={selectedTask?.bookName || ''}
+      />
     </div>
   )
 }

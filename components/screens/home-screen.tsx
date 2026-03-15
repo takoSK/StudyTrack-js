@@ -20,8 +20,19 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
   const [pomodoroOpen, setPomodoroOpen] = useState(false)
 
-  const todaysTasks = tasks.filter((t) => !t.completed)
-  const completedToday = tasks.filter((t) => t.completed).length
+  const today = new Date()
+  
+  const todaysTasks = tasks.filter((task) => {
+    const taskDate = task.date.toDate()
+
+    return (
+      taskDate.getFullYear() === today.getFullYear() &&
+      taskDate.getMonth() === today.getMonth() &&
+      taskDate.getDate() === today.getDate()
+    )
+  })
+
+  const completedToday = todaysTasks.filter((t) => t.completed).length
 
   const handleTaskComplete = (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId)
@@ -70,13 +81,15 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
           <div>
             <p className="text-sm opacity-90">{"Today's Progress"}</p>
             <p className="text-2xl font-bold">
-              {completedToday} / {tasks.length}
+              {completedToday} / {todaysTasks.length}
             </p>
             <p className="text-xs opacity-75">tasks completed</p>
           </div>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20">
             <span className="text-xl font-bold">
-              {tasks.length > 0 ? Math.round((completedToday / tasks.length) * 100) : 0}%
+              {todaysTasks.length === 0
+                ? 0
+                : Math.round((completedToday / todaysTasks.length) * 100)}%
             </span>
           </div>
         </div>

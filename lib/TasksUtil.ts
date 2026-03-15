@@ -1,20 +1,16 @@
+import { Timestamp } from "firebase/firestore"
+import { DailyTask, Day } from "./types"
 import { WeeklyTask } from './types'
 
-export function distributeTasks(
-  tasks: WeeklyTask[],
-  days: Date[],
-  weights: number[]
-) {
-  return tasks.flatMap(task =>
-    distributeTask(task, days, weights)
-  )
-}
+const dayNames: Day[] = [
+  'monday','tuesday','wednesday','thursday','friday','saturday','sunday'
+]
 
-function distributeTask(task: WeeklyTask, days: Date[], weights: number[]) {
+export function distributeTask(task: WeeklyTask, days: Date[], weights: number[]) : Omit<DailyTask,"id">[] {
   const totalPages = task.endPage - task.startPage + 1
   const totalWeight = weights.reduce((sum, w) => sum + w, 0)
 
-  const dailyTasks = []
+  const dailyTasks: Omit<DailyTask,"id">[] = []
   let currentPage = task.startPage
 
   for ( let i = 0; i < days.length; i++ ) {
@@ -26,18 +22,21 @@ function distributeTask(task: WeeklyTask, days: Date[], weights: number[]) {
     const end = Math.min(currentPage + pages - 1, task.endPage)
   
     dailyTasks.push({
-      weekId: task.weekId,
-      weeklyTaskId: task.id,
+      date: Timestamp.fromDate(days[i]),
       bookId: task.bookId,
+      weeklyTaskId: task.id,
       bookName: task.bookName,
       pageStart: start,
       pageEnd: end,
       priority: task.priority,
-      completed:false
+      completed:false,
+      weekday: dayNames[i],
+      subject: task.subject,
     })
 
     currentPage = end + 1
     if ( currentPage > task.endPage ) break
   }
+  
   return dailyTasks
 }

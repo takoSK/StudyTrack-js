@@ -1,16 +1,12 @@
-export interface DailyTask {
-  id: string
-  weekId: string
-  weeklyTaskId: string
-  bookId: string
-  bookName: string
-  pageStart: number
-  pageEnd: number
-  priority: string
-  completed: boolean
-}
+import { Timestamp } from "firebase/firestore"
 
-export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+export interface UserProfile {
+  id: string
+  name: string
+  totalPoints: number
+  tasksCompleted: number
+  totalStudyMinutes: number
+}
 
 export interface StudyBook {
   id: string
@@ -18,14 +14,39 @@ export interface StudyBook {
   subject: string
   totalPages: number
   completedPages: number
-  monthlyTarget: number
 }
 
-export interface WeeklyPlan {
-  week: number
+export interface DailyTask {
+  id: string
+  date: Timestamp
+  bookId: string
+  weeklyTaskId: string
+  bookName: string
   pageStart: number
   pageEnd: number
+  priority: string
+  completed: boolean
+  weekday: Day
+  subject: string
 }
+
+export interface WeeklyTask {
+  id: string
+  weekId: string
+  bookId: string
+  bookName: string
+  startPage: number
+  endPage: number
+  priority: string
+  subject: string
+  isDistributed: boolean
+}
+
+export type Day = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+
+
+
 
 export interface Reward {
   id: string
@@ -46,14 +67,6 @@ export interface SubjectDistribution {
   color: string
 }
 
-export interface UserProfile {
-  id: string
-  name: string
-  totalPoints: number
-  tasksCompleted: number
-  totalStudyMinutes: number
-}
-
 export interface TextbookRange {
   id: string
   bookId: string
@@ -61,14 +74,4 @@ export interface TextbookRange {
   subject: string
   startPage: number
   endPage: number
-}
-
-export interface WeeklyTask {
-  id: string
-  weekId: string
-  bookId: string
-  bookName: string
-  startPage: number
-  endPage: number
-  priority: string
 }

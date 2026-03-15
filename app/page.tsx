@@ -16,17 +16,18 @@ import type { DailyTask, UserProfile, StudyBook, WeeklyTask } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks } from '@/lib/firebase/firestoreClient'
+import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint } from '@/lib/firebase/firestoreClient'
 import { onSnapshot, collection, doc } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import { PlanScreen } from '@/components/screens/plan-screen'
-import { distributeTasks } from '@/lib/TasksUtil'
+import { distributeTask } from '@/lib/TasksUtil'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
   const [tasks, setTasks] = useState<DailyTask[]>([])
   const [books, setBooks] = useState<StudyBook[]>([])
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTask[]>([])
+  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
   const [user, setUser] = useState<UserProfile>({
   id: 'user-1',
   name: "",
@@ -39,6 +40,7 @@ export default function StudyApp() {
   let unsubscribeProfile: () => void
   let unsubscribeBooks: (() => void) | undefined
   let unsubscribeWeeklyTasks: (() => void) | undefined
+  let unsubscribeDailyTask: (() => void) | undefined
 
   const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
     if (!firebaseUser) return
@@ -79,29 +81,38 @@ export default function StudyApp() {
         })) as WeeklyTask[]
 
         setWeeklyTasks(weeklyTasks)
-        console.log("Weekly tasks updated for user:", userId, weeklyTasks)
       }
     )
 
-    console.log("User authenticated with ID:", userId)
+    unsubscribeDailyTask = onSnapshot(
+      collection(db, "users", userId, "dailyTasks"),
+      (snapshot) => {
+        const dailyTasks = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as DailyTask[]
+
+        setDailyTasks(dailyTasks)
+      }
+    )
   })
 
   return () => {
     unsubscribeAuth()
     unsubscribeBooks?.()
     unsubscribeWeeklyTasks?.()
+    unsubscribeDailyTask?.()
     unsubscribeProfile?.()
   }
 }, [])
 
-  const handleCompleteTask = (taskId: string, studyTime: number) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, completed: true, studyTime }
-          : task
-      )
-    )
+  const handleCompleteTask = async (taskId: string, studyTime: number) => {
+    const user = auth.currentUser
+    if (!user) return
+
+    await deleteDailyTask(user.uid,taskId)
+
+    await addPoint(user.uid, studyTime)
   }
 
   const handleRedeemReward = (rewardId: string) => {
@@ -114,7 +125,6 @@ export default function StudyApp() {
       // In a real app, this would trigger the reward
     }
   }
-  
 
   const handleAddWeeklyTask = async (task: Omit<WeeklyTask, 'id'>) => {
     const user = auth.currentUser
@@ -172,12 +182,13 @@ export default function StudyApp() {
     ? Math.round((tasks.filter((t) => t.completed).length / tasks.length) * 100)
     : 0
 
-  const handleGenerateDailyTasks = (weekId: string, date: Date[], weights: number[]) => {
-    console.log("Generating daily tasks for week:", weekId)
-    const weeklytasks = weeklyTasks.filter(task => task.weekId === weekId)
-    const distributedTasks = distributeTasks(weeklytasks, date, weights)
-    console.log(distributedTasks)
+  const handleGenerateDailyTasks = (task: WeeklyTask, date: Date[], weights: number[]) => {
+    const distributedTasks = distributeTask(task, date, weights)
     addDailyTasks(user.id,distributedTasks)
+    updateWeeklyTask(user.id,task.id, {
+        isDistributed: true
+      }
+    )
   }
 
   const handleAddTask = (task: Omit<DailyTask, 'id' | 'completed' | 'studyTime'>) => {
@@ -195,14 +206,15 @@ export default function StudyApp() {
       <main className="px-4 pt-6">
         {activeTab === 'home' && (
           <HomeScreen
-            tasks={tasks}
+            tasks={dailyTasks}
             user={user}
             onCompleteTask={handleCompleteTask}
           />
         )}
         {activeTab === 'tasks' && (
           <TasksScreen
-            tasks={tasks}
+            books={books}
+            tasks={dailyTasks}
             onCompleteTask={handleCompleteTask}
             onAddTask={handleAddTask}
           />

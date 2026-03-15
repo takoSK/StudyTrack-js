@@ -35,8 +35,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import type { StudyBook } from '@/lib/types'
-import { addBook } from '@/lib/firebase/firestoreClient'
-import { on } from 'events'
 
 interface BooksScreenProps {
   books: StudyBook[]
@@ -96,7 +94,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
         subject: editingBook.subject,
         totalPages: editingBook.totalPages,
         completedPages: editingBook.completedPages,
-        monthlyTarget: editingBook.monthlyTarget,
       })
       setEditingBook(null)
     }
@@ -173,16 +170,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
                   onChange={(e) => setNewBook({ ...newBook, completedPages: parseInt(e.target.value) || 0 })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="monthly-target">Monthly Target (pages)</Label>
-                <Input
-                  id="monthly-target"
-                  type="number"
-                  placeholder="0"
-                  value={newBook.monthlyTarget || ''}
-                  onChange={(e) => setNewBook({ ...newBook, monthlyTarget: parseInt(e.target.value) || 0 })}
-                />
-              </div>
               <Button onClick={handleAddBook} className="w-full">
                 Add Book
               </Button>
@@ -229,9 +216,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
           books.map((book) => {
             const progress = Math.round((book.completedPages / book.totalPages) * 100)
             const remainingPages = book.totalPages - book.completedPages
-            const weeksToComplete = book.monthlyTarget > 0 
-              ? Math.ceil(remainingPages / (book.monthlyTarget / 4))
-              : null
 
             return (
               <Card key={book.id} className="overflow-hidden">
@@ -310,15 +294,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
                                   onChange={(e) => setEditingBook({ ...editingBook, completedPages: parseInt(e.target.value) || 0 })}
                                 />
                               </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="edit-target">Monthly Target</Label>
-                                <Input
-                                  id="edit-target"
-                                  type="number"
-                                  value={editingBook.monthlyTarget}
-                                  onChange={(e) => setEditingBook({ ...editingBook, monthlyTarget: parseInt(e.target.value) || 0 })}
-                                />
-                              </div>
                               <Button onClick={handleUpdateBook} className="w-full">
                                 Save Changes
                               </Button>
@@ -370,31 +345,6 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
                     <Progress value={progress} className="h-2" />
                     <div className="mt-1 text-right text-xs text-muted-foreground">{progress}% complete</div>
                   </div>
-
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-2">
-                      <Target className="h-4 w-4 text-primary" />
-                      <div>
-                        <div className="text-xs text-muted-foreground">Monthly Target</div>
-                        <div className="text-sm font-medium">{book.monthlyTarget} pages</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-2">
-                      <TrendingUp className="h-4 w-4 text-accent" />
-                      <div>
-                        <div className="text-xs text-muted-foreground">Remaining</div>
-                        <div className="text-sm font-medium">{remainingPages} pages</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Estimated Completion */}
-                  {weeksToComplete && (
-                    <div className="rounded-lg border border-border bg-card p-2 text-center text-xs text-muted-foreground">
-                      Estimated completion: <span className="font-medium text-foreground">{weeksToComplete} weeks</span> at current pace
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             )
