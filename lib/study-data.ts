@@ -1,43 +1,5 @@
 import type { StudyBook, Reward, StudyStats, SubjectDistribution, UserProfile } from './types'
 
-export const rewards: Reward[] = [
-  {
-    id: '1',
-    name: 'Watch YouTube',
-    description: '30 minutes of free time',
-    pointsCost: 100,
-    icon: 'play',
-  },
-  {
-    id: '2',
-    name: 'Eat Dessert',
-    description: 'Treat yourself to something sweet',
-    pointsCost: 75,
-    icon: 'cake',
-  },
-  {
-    id: '3',
-    name: 'Play Games',
-    description: '1 hour of gaming',
-    pointsCost: 150,
-    icon: 'gamepad',
-  },
-  {
-    id: '4',
-    name: 'Social Media',
-    description: '20 minutes browsing',
-    pointsCost: 50,
-    icon: 'smartphone',
-  },
-  {
-    id: '5',
-    name: 'Movie Night',
-    description: 'Watch a full movie',
-    pointsCost: 200,
-    icon: 'film',
-  },
-]
-
 export const weeklyStudyStats: StudyStats[] = [
   { day: 'Mon', minutes: 120 },
   { day: 'Tue', minutes: 90 },

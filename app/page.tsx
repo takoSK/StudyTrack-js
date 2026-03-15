@@ -8,7 +8,6 @@ import { BooksScreen } from '@/components/screens/books-screen'
 import { AnalysisScreen } from '@/components/screens/analysis-screen'
 import { RewardsScreen } from '@/components/screens/rewards-screen'
 import {
-  rewards,
   weeklyStudyStats,
   subjectDistribution,
 } from '@/lib/study-data'
