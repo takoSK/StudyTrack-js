@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { DailyTask } from '@/lib/types'
+import { PriorityBadge } from './priority-badge'
 
 interface TaskCardProps {
   task: DailyTask
@@ -54,8 +55,9 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
             {task.bookName}
           </h3>
           <p className="text-sm text-muted-foreground">
-            p{task.pageStart}–{task.pageEnd}
+            p{task.pageStart} - {task.pageEnd}
           </p>
+          <PriorityBadge priority={task.priority} />
         </div>
         <Button
           size="sm"

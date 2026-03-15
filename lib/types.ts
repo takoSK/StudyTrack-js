@@ -24,7 +24,7 @@ export interface DailyTask {
   bookName: string
   pageStart: number
   pageEnd: number
-  priority: string
+  priority: Priority
   completed: boolean
   weekday: Day
   subject: string
@@ -37,24 +37,23 @@ export interface WeeklyTask {
   bookName: string
   startPage: number
   endPage: number
-  priority: string
+  priority: Priority
   subject: string
   isDistributed: boolean
 }
-
-export type Day = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
-
-
-
-
 
 export interface Reward {
   id: string
   name: string
   description: string
   pointsCost: number
-  icon: string
 }
+
+export type Day = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+export type Priority = "high" | "medium" | "low"
+
+
 
 export interface StudyStats {
   day: string

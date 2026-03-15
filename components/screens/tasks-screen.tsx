@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -29,11 +29,12 @@ import {
 import type { DailyTask, Day, StudyBook } from '@/lib/types'
 import { TaskCard } from '../task-card'
 import { StudyTimeDialog } from '../study-time-dialog'
+import { addDailyTask } from '@/lib/firebase/firestoreClient'
 
 interface TasksScreenProps {
   books: StudyBook[]
   tasks: DailyTask[]
-  onCompleteTask: (taskId: string, studyTime: number) => void
+  onCompleteTask: (taskId: string, studyTime: number, priority: string) => void
   onAddTask: (task: Omit<DailyTask, 'id' | 'completed'>) => void
 }
 
@@ -105,26 +106,6 @@ export function TasksScreen({ books, tasks, onCompleteTask }: TasksScreenProps) 
 
   const weekDays = getWeekDays(weekOffset)
 
-  const tasksByDay = useMemo(() => {
-    const grouped: Record<Day, DailyTask[]> = {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: [],
-    }
-    
-    /*tasks.forEach((task) => {
-      if (task.weekday) {
-        grouped[task.weekday].push(task)
-      }
-    })*/
-    
-    return grouped
-  }, [tasks])
-
   const completedCount = tasks.filter((t) => t.completed).length
   const totalCount = tasks.length
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
@@ -151,7 +132,7 @@ export function TasksScreen({ books, tasks, onCompleteTask }: TasksScreenProps) 
 
   const handleConfirmTime = (minutes: number) => {
     if (selectedTask) {
-      onCompleteTask(selectedTask.id, minutes)
+      onCompleteTask(selectedTask.id, minutes,selectedTask.priority)
       setDialogOpen(false)
       setSelectedTask(null)
     }

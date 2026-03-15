@@ -12,15 +12,15 @@ import {
   weeklyStudyStats,
   subjectDistribution,
 } from '@/lib/study-data'
-import type { DailyTask, UserProfile, StudyBook, WeeklyTask } from '@/lib/types'
+import type { DailyTask, UserProfile, StudyBook, WeeklyTask, Reward } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint } from '@/lib/firebase/firestoreClient'
+import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint, addReward, deletePoint } from '@/lib/firebase/firestoreClient'
 import { onSnapshot, collection, doc } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import { PlanScreen } from '@/components/screens/plan-screen'
-import { distributeTask } from '@/lib/TasksUtil'
+import { calcPoint, distributeTask } from '@/lib/TasksUtil'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
@@ -28,6 +28,7 @@ export default function StudyApp() {
   const [books, setBooks] = useState<StudyBook[]>([])
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTask[]>([])
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
+  const [rewards, setRewards] = useState<Reward[]>([])
   const [user, setUser] = useState<UserProfile>({
   id: 'user-1',
   name: "",
@@ -41,6 +42,7 @@ export default function StudyApp() {
   let unsubscribeBooks: (() => void) | undefined
   let unsubscribeWeeklyTasks: (() => void) | undefined
   let unsubscribeDailyTask: (() => void) | undefined
+  let unsubscribeReward:(() => void) | undefined
 
   const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
     if (!firebaseUser) return
@@ -95,6 +97,18 @@ export default function StudyApp() {
         setDailyTasks(dailyTasks)
       }
     )
+
+    unsubscribeReward = onSnapshot(
+      collection(db, "users", userId, "rewards"),
+      (snapshot) => {
+        const rewards = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Reward[]
+
+        setRewards(rewards)
+      }
+    )
   })
 
   return () => {
@@ -105,26 +119,6 @@ export default function StudyApp() {
     unsubscribeProfile?.()
   }
 }, [])
-
-  const handleCompleteTask = async (taskId: string, studyTime: number) => {
-    const user = auth.currentUser
-    if (!user) return
-
-    await deleteDailyTask(user.uid,taskId)
-
-    await addPoint(user.uid, studyTime)
-  }
-
-  const handleRedeemReward = (rewardId: string) => {
-    const reward = rewards.find((r) => r.id === rewardId)
-    if (reward && user.totalPoints >= reward.pointsCost) {
-      setUser((prev) => ({
-        ...prev,
-        totalPoints: prev.totalPoints - reward.pointsCost,
-      }))
-      // In a real app, this would trigger the reward
-    }
-  }
 
   const handleAddWeeklyTask = async (task: Omit<WeeklyTask, 'id'>) => {
     const user = auth.currentUser
@@ -152,8 +146,9 @@ export default function StudyApp() {
     setWeeklyTasks((prev) => prev.filter((task) => task.id !== taskId))
   }
 
-  const handleAddBook = async (book: Omit<StudyBook, 'id'>) => {
 
+
+  const handleAddBook = async (book: Omit<StudyBook, 'id'>) => {
     const user = auth.currentUser
     if (!user) return
 
@@ -182,6 +177,8 @@ export default function StudyApp() {
     ? Math.round((tasks.filter((t) => t.completed).length / tasks.length) * 100)
     : 0
 
+
+
   const handleGenerateDailyTasks = (task: WeeklyTask, date: Date[], weights: number[]) => {
     const distributedTasks = distributeTask(task, date, weights)
     addDailyTasks(user.id,distributedTasks)
@@ -189,6 +186,17 @@ export default function StudyApp() {
         isDistributed: true
       }
     )
+  }
+
+  const handleCompleteTask = async (taskId: string, studyTime: number, priority: string) => {
+    const user = auth.currentUser
+    if (!user) return
+
+    const point = calcPoint(studyTime, priority)
+
+    await deleteDailyTask(user.uid,taskId)
+
+    await addPoint(user.uid, point ?? 0)
   }
 
   const handleAddTask = (task: Omit<DailyTask, 'id' | 'completed' | 'studyTime'>) => {
@@ -199,6 +207,25 @@ export default function StudyApp() {
     }
     setTasks((prev) => [...prev, newTask])
   }
+
+
+
+  const handleAddReward = async (reward: Omit<Reward, "id">) => {
+    const user = auth.currentUser
+    if (!user) return
+
+    await addReward(user.uid, reward)
+  }
+
+  const handleRedeemReward = async (rewardId: string) => {
+    const user = auth.currentUser
+    if(!user) return
+
+    const reward = rewards.find((r) => r.id === rewardId)
+    
+    await deletePoint(user.uid, reward?.pointsCost || 0)
+  }
+
 
   return (
     <AuthGuard>
@@ -249,6 +276,7 @@ export default function StudyApp() {
             rewards={rewards}
             user={user}
             onRedeem={handleRedeemReward}
+            onAddRedeem={handleAddReward}
           />
         )}
       </main>

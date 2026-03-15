@@ -12,7 +12,7 @@ import { Logout } from '@/lib/firebase/auth'
 interface HomeScreenProps {
   tasks: DailyTask[]
   user: UserProfile
-  onCompleteTask: (taskId: string, studyTime: number) => void
+  onCompleteTask: (taskId: string, studyTime: number, priority: string) => void
 }
 
 export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
@@ -44,7 +44,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
 
   const handleConfirmTime = (minutes: number) => {
     if (selectedTask) {
-      onCompleteTask(selectedTask.id, minutes)
+      onCompleteTask(selectedTask.id, minutes,selectedTask.priority)
       setDialogOpen(false)
       setSelectedTask(null)
     }

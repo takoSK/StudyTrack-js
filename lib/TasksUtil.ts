@@ -6,6 +6,8 @@ const dayNames: Day[] = [
   'monday','tuesday','wednesday','thursday','friday','saturday','sunday'
 ]
 
+
+
 export function distributeTask(task: WeeklyTask, days: Date[], weights: number[]) : Omit<DailyTask,"id">[] {
   const totalPages = task.endPage - task.startPage + 1
   const totalWeight = weights.reduce((sum, w) => sum + w, 0)
@@ -39,4 +41,16 @@ export function distributeTask(task: WeeklyTask, days: Date[], weights: number[]
   }
   
   return dailyTasks
+}
+
+export function calcPoint(time: number,priority: string) {
+  if (priority === "low") {
+    return time * 1
+  }
+  if (priority === "medium") {
+    return time * 2
+  }
+  if (priority === "high") {
+    return time * 3
+  }
 }

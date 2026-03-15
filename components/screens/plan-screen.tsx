@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Card, CardContent} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -29,8 +28,9 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react'
-import type { WeeklyTask, StudyBook } from '@/lib/types'
+import type { WeeklyTask, StudyBook, Priority } from '@/lib/types'
 import { Fascinate_Inline } from 'next/font/google'
+import { PriorityBadge } from '../priority-badge'
 
 interface PlanScreenProps {
   books: StudyBook[]
@@ -92,7 +92,7 @@ export function PlanScreen({ books, weeklyTasks, onAddWeeklyTask, onUpdateWeekly
       bookName: selectedBook?.name ?? "",
       startPage,
       endPage,
-      priority: taskForm.priority,
+      priority: taskForm.priority as Priority,
       subject: selectedBook?.subject ?? "",
       isDistributed: false
     }
@@ -145,18 +145,6 @@ export function PlanScreen({ books, weeklyTasks, onAddWeeklyTask, onUpdateWeekly
   }
 
   const filteredTasks = weeklyTasks.filter((task) => task.weekId === `week-${currentWeek}`)
-
-  function PriorityBadge({ priority }: { priority: string }) {
-    if (priority === 'high') {
-      return <Badge className="bg-red-100 text-red-700">High</Badge>
-    }
-
-    if (priority === 'medium') {
-      return <Badge className="bg-yellow-100 text-yellow-700">Medium</Badge>
-    }
-
-    return <Badge className="bg-green-200 text-green-700">Low</Badge>
-  }
 
   return (
     <div className="flex flex-col gap-4 pb-24">

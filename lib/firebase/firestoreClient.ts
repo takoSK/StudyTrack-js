@@ -1,6 +1,6 @@
 import {collection, addDoc, doc, getDoc, updateDoc, deleteDoc, writeBatch, increment} from 'firebase/firestore'
 import { db } from '../FirebaseConfig'
-import { DailyTask, StudyBook, UserProfile, WeeklyTask } from '../types'; 
+import { DailyTask, Reward, StudyBook, UserProfile, WeeklyTask } from '../types'; 
 
 export async function addBook(userId: string, book: Omit<StudyBook, "id">) {
   const docRef = await addDoc(
@@ -112,11 +112,36 @@ export async function deleteDailyTask(userId: string, taskId: string) {
   }
 }
 
+
+
+export async function addReward(userId: string, reward: Omit<Reward, 'id'>) {
+  const docRef = await addDoc(
+    collection(db, "users", userId, "rewards"),
+    reward
+  )
+
+  return {
+    id: docRef.id,
+    ...reward
+  }
+}
+
 export async function addPoint(userId: string, points: number) {
   try {
     const pointRef = doc(db, "users", userId)
     await updateDoc(pointRef, {
       totalPoints: increment(points)
+    })
+  } catch (error) {
+    console.error("Error adding points", error)
+  }
+}
+
+export async function deletePoint(userId: string, points: number) {
+  try {
+    const pointRef = doc(db, "users", userId)
+    await updateDoc(pointRef, {
+      totalPoints: increment(points * -1)
     })
   } catch (error) {
     console.error("Error adding points", error)
