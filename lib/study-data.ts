@@ -1,4 +1,4 @@
-import type { StudyBook, Reward, StudyStats, SubjectDistribution, UserProfile } from './types'
+import type { StudyStats, SubjectDistribution, UserProfile } from './types'
 
 export const weeklyStudyStats: StudyStats[] = [
   { day: 'Mon', minutes: 120 },
@@ -6,7 +6,7 @@ export const weeklyStudyStats: StudyStats[] = [
   { day: 'Wed', minutes: 150 },
   { day: 'Thu', minutes: 80 },
   { day: 'Fri', minutes: 110 },
-  { day: 'Sat', minutes: 180 },
+  { day: 'Sat', minutes: 1 },
   { day: 'Sun', minutes: 60 },
 ]
 

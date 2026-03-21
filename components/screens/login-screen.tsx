@@ -48,7 +48,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           <GraduationCap className="h-9 w-9 text-primary-foreground" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">StudyFlow</h1>
+          <h1 className="text-2xl font-bold text-foreground">StudyTrack</h1>
           <p className="text-sm text-muted-foreground">集中して、目標を達成しよう</p>
         </div>
       </div>

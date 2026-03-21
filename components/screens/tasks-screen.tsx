@@ -75,7 +75,7 @@ function getWeekDays(weekOffset: number) {
   const today = new Date()
 
   const monday = new Date(today)
-  monday.setDate(today.getDate() - today.getDay() + 1 + (weekOffset-1) * 7)
+  monday.setDate(today.getDate() - today.getDay() + 1 + (weekOffset) * 7)
 
   const days: Date[] = []
 
@@ -105,10 +105,6 @@ export function TasksScreen({ books, tasks, onCompleteTask }: TasksScreenProps) 
   const weekRange = getWeekRange(weekOffset)
 
   const weekDays = getWeekDays(weekOffset)
-
-  const completedCount = tasks.filter((t) => t.completed).length
-  const totalCount = tasks.length
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   const selectedDayTasks = tasks.filter((task) => {
     const taskDate =
@@ -224,17 +220,6 @@ export function TasksScreen({ books, tasks, onCompleteTask }: TasksScreenProps) 
           })}
 
         </div>
-      </Card>
-
-      {/* Weekly Progress */}
-      <Card className="p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-medium text-foreground">Weekly Progress</span>
-          <span className="text-sm text-muted-foreground">
-            {completedCount} / {totalCount} tasks completed
-          </span>
-        </div>
-        <Progress value={progressPercent} className="h-2" />
       </Card>
 
       {/* Weekly Task List */}
