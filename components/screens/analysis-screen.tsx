@@ -12,7 +12,6 @@ import {
   Cell,
 } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import type { StudyStats, SubjectDistribution } from '@/lib/types'
 
 interface AnalysisScreenProps {
   studyStats: StudyStats[]

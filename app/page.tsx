@@ -5,147 +5,93 @@ import { BottomNav } from '@/components/bottom-nav'
 import { HomeScreen } from '@/components/screens/home-screen'
 import { TasksScreen } from '@/components/screens/tasks-screen'
 import { BooksScreen } from '@/components/screens/books-screen'
-import { AnalysisScreen } from '@/components/screens/analysis-screen'
-import { RewardsScreen } from '@/components/screens/rewards-screen'
-import {
-  weeklyStudyStats,
-  subjectDistribution,
-} from '@/lib/study-data'
-import type { DailyTask, UserProfile, StudyBook, WeeklyTask, Reward } from '@/lib/types'
+import type { UserProfile, StudyBook, Reward, Task } from '@/lib/types'
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint, addReward, deletePoint } from '@/lib/firebase/firestoreClient'
-import { onSnapshot, collection, doc } from 'firebase/firestore'
+import { deleteBook, updateBook, addBook } from '@/lib/firebase/firestoreClient'
+import { onSnapshot, collection, doc, Timestamp, query, orderBy, where } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import { PlanScreen } from '@/components/screens/plan-screen'
-import { calcPoint, distributeTask } from '@/lib/TasksUtil'
+import { generateCategoricalChart } from 'recharts/types/chart/generateCategoricalChart'
+import { generateTodayTasks } from '@/lib/TasksUtil'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
-  const [tasks, setTasks] = useState<DailyTask[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [todaysTasks, setTodaysTasks] = useState<Task[]>([])
   const [books, setBooks] = useState<StudyBook[]>([])
-  const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTask[]>([])
-  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
   const [rewards, setRewards] = useState<Reward[]>([])
   const [user, setUser] = useState<UserProfile>({
   id: 'user-1',
   name: "",
-  totalPoints: 0,
-  tasksCompleted: 0,
-  totalStudyMinutes: 0
+  points: 0,
+  totalStudyMinutes: 0,
+  streak: 0,
+  lastStudyDate: new Timestamp(1,1)
   })
 
   useEffect(() => {
-  let unsubscribeProfile: () => void
-  let unsubscribeBooks: (() => void) | undefined
-  let unsubscribeWeeklyTasks: (() => void) | undefined
-  let unsubscribeDailyTask: (() => void) | undefined
-  let unsubscribeReward:(() => void) | undefined
+    let unsubscribeProfile: () => void
+    let unsubscribeTasks: (() => void) | undefined
+    let unsubscribeBooks: (() => void) | undefined
 
-  const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
-    if (!firebaseUser) return
+    const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (!firebaseUser) return
 
-    const userId = firebaseUser.uid
+      const userId = firebaseUser.uid
 
-    unsubscribeProfile = onSnapshot(
-      doc(db, "users", userId),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const profileData = docSnap.data() as Omit<UserProfile, "id">
-          setUser({
-            id: docSnap.id,
-            ...profileData
-          })
+      const tasksRef = collection(db, "users", userId, "tasks")
+      const tasks = query(
+        tasksRef,
+        where("status", "==", "active"),
+        orderBy("createdAt", "desc")
+      )
+
+      const booksRef = collection(db, "users", userId, "books")
+
+      unsubscribeProfile = onSnapshot(
+        doc(db, "users", userId),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const profileData = docSnap.data() as Omit<UserProfile, "id">
+            setUser({
+              id: docSnap.id,
+              ...profileData
+            })
+          }
         }
-      }
-    )
+      )
 
-    unsubscribeBooks = onSnapshot(
-      collection(db, "users", userId, "books"),
-      (snapshot) => {
-        const books = snapshot.docs.map(doc => ({
-          id: doc.id,
+      unsubscribeTasks = onSnapshot(tasksRef,(snapshot) => {
+        const task: Task[] = snapshot.docs.map((doc) => ({
+          id:doc.id,
+          ...doc.data()
+        })) as Task[]
+
+        setTasks(task)
+        setTodaysTasks(generateTodayTasks(task))
+        }
+      )
+
+      unsubscribeBooks = onSnapshot(booksRef,(snapshot) => {
+        const book: StudyBook[] = snapshot.docs.map((doc) => ({
+          id:doc.id,
           ...doc.data()
         })) as StudyBook[]
 
-        setBooks(books)
-      }
-    )
-
-    unsubscribeWeeklyTasks = onSnapshot(
-      collection(db, "users", userId, "weeklyTasks"),
-      (snapshot) => {
-        const weeklyTasks = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as WeeklyTask[]
-
-        setWeeklyTasks(weeklyTasks)
-      }
-    )
-
-    unsubscribeDailyTask = onSnapshot(
-      collection(db, "users", userId, "dailyTasks"),
-      (snapshot) => {
-        const dailyTasks = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as DailyTask[]
-
-        setDailyTasks(dailyTasks)
-      }
-    )
-
-    unsubscribeReward = onSnapshot(
-      collection(db, "users", userId, "rewards"),
-      (snapshot) => {
-        const rewards = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Reward[]
-
-        setRewards(rewards)
-      }
-    )
-  })
-
-  return () => {
-    unsubscribeAuth()
-    unsubscribeBooks?.()
-    unsubscribeWeeklyTasks?.()
-    unsubscribeDailyTask?.()
-    unsubscribeProfile?.()
-  }
-}, [])
-
-  const handleAddWeeklyTask = async (task: Omit<WeeklyTask, 'id'>) => {
-    const user = auth.currentUser
-    if (!user) return
-
-    await addWeeklyTask(user.uid, task)
-  }
-
-  const handleUpdateWeeklyTask = async (taskId: string, updates: Partial<WeeklyTask>) => {
-    const user = auth.currentUser
-    if (!user) return
-    await updateWeeklyTask(user.uid, taskId, updates)
-
-    setWeeklyTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, ...updates } : task
+        setBooks(book)
+        }
       )
-    )
-  }
+    })
 
-  const handleDeleteWeeklyTask = async (taskId: string) => {
-    const user = auth.currentUser
-    if (!user) return
-    await deleteWeeklyTask(user.uid, taskId)
-    setWeeklyTasks((prev) => prev.filter((task) => task.id !== taskId))
-  }
-
-
+    return () => {
+      unsubscribeAuth()
+      unsubscribeTasks?.()
+      unsubscribeBooks?.()
+      unsubscribeProfile?.()
+    }
+  }, [])
 
   const handleAddBook = async (book: Omit<StudyBook, 'id'>) => {
     const user = auth.currentUser
@@ -166,65 +112,20 @@ export default function StudyApp() {
     )
   }
 
-  const handleDeleteBook = async (bookId: string) => {
-    const user = auth.currentUser
-    if (!user) return
-    await deleteBook(user.uid, bookId)
-    setBooks((prev) => prev.filter((book) => book.id !== bookId))
-  }
-  const completionRate = tasks.length > 0
-    ? Math.round((tasks.filter((t) => t.completed).length / tasks.length) * 100)
-    : 0
-
-
-
-  const handleGenerateDailyTasks = (task: WeeklyTask, date: Date[], weights: number[]) => {
-    const distributedTasks = distributeTask(task, date, weights)
-    addDailyTasks(user.id,distributedTasks)
-    updateWeeklyTask(user.id,task.id, {
-        isDistributed: true
-      }
-    )
-  }
-
-  const handleCompleteTask = async (taskId: string, studyTime: number, priority: string) => {
+  const handleDeleteBook = async (bookid: string) => {
     const user = auth.currentUser
     if (!user) return
 
-    const point = calcPoint(studyTime, priority)
-
-    await deleteDailyTask(user.uid,taskId)
-
-    await addPoint(user.uid, point ?? 0)
+    await deleteBook(user.uid,bookid)
   }
 
-  const handleAddTask = (task: Omit<DailyTask, 'id' | 'completed' | 'studyTime'>) => {
-    const newTask: DailyTask = {
-      id: `task-${Date.now()}`,
-      completed: false,
-      ...task,
-    }
-    setTasks((prev) => [...prev, newTask])
-  }
+  const handleAddTask = async(task: Omit<Task,"id">) => {}
 
+  const handleUpdateTask = async(taskId: string, updatedData: Partial<Task>) => {}
 
+  const handleDeleteTask = async(taskId: string) => {}
 
-  const handleAddReward = async (reward: Omit<Reward, "id">) => {
-    const user = auth.currentUser
-    if (!user) return
-
-    await addReward(user.uid, reward)
-  }
-
-  const handleRedeemReward = async (rewardId: string) => {
-    const user = auth.currentUser
-    if(!user) return
-
-    const reward = rewards.find((r) => r.id === rewardId)
-    
-    await deletePoint(user.uid, reward?.pointsCost || 0)
-  }
-
+  const handleCompleteTask = async(taskId: string, studyTime: number, priority: string) => {}
 
   return (
     <AuthGuard>
@@ -232,27 +133,18 @@ export default function StudyApp() {
       <main className="px-4 pt-6">
         {activeTab === 'home' && (
           <HomeScreen
-            tasks={dailyTasks}
+            tasks={todaysTasks}
             user={user}
             onCompleteTask={handleCompleteTask}
-          />
-        )}
-        {activeTab === 'tasks' && (
-          <TasksScreen
-            books={books}
-            tasks={dailyTasks}
-            onCompleteTask={handleCompleteTask}
-            onAddTask={handleAddTask}
           />
         )}
         {activeTab === 'plans' && (
           <PlanScreen
             books={books}
-            weeklyTasks={weeklyTasks}
-            onAddWeeklyTask={handleAddWeeklyTask}
-            onUpdateWeeklyTask={handleUpdateWeeklyTask}
-            onDeleteWeeklyTask={handleDeleteWeeklyTask}
-            onGenerateDailyTasks={handleGenerateDailyTasks}
+            tasks={tasks}
+            onAddTask={handleAddTask}
+            onUpdateTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
           />  
         )}
         {activeTab === 'books' && (
@@ -263,21 +155,14 @@ export default function StudyApp() {
             onDeleteBook={handleDeleteBook}
           />
         )}
-        {activeTab === 'analysis' && (
-          <AnalysisScreen
-            studyStats={weeklyStudyStats}
-            subjectDistribution={subjectDistribution}
-            completionRate={completionRate}
-          />
-        )}
-        {activeTab === 'rewards' && (
+        {/*activeTab === 'rewards' && (
           <RewardsScreen
             rewards={rewards}
             user={user}
             onRedeem={handleRedeemReward}
             onAddRedeem={handleAddReward}
           />
-        )}
+        )*/}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>

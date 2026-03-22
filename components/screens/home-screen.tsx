@@ -1,47 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { LogOut, Star, Timer } from 'lucide-react'
+import { LogOut, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/task-card'
 import { StudyTimeDialog } from '@/components/study-time-dialog'
-import { PomodoroTimer } from '@/components/pomodoro-timer'
-import type { DailyTask, UserProfile } from '@/lib/types'
+import type { Task, UserProfile } from '@/lib/types'
 import { Logout } from '@/lib/firebase/auth'
 
 interface HomeScreenProps {
-  tasks: DailyTask[]
+  tasks: Task[]
   user: UserProfile
   onCompleteTask: (taskId: string, studyTime: number, priority: string) => void
 }
 
 export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
-  const [pomodoroOpen, setPomodoroOpen] = useState(false)
-
-  const today = new Date()
-  
-  const todaysTasks = tasks.filter((task) => {
-    const taskDate = task.date.toDate()
-
-    return (
-      taskDate.getFullYear() === today.getFullYear() &&
-      taskDate.getMonth() === today.getMonth() &&
-      taskDate.getDate() === today.getDate()
-    )
-  })
-
-  const completedToday = todaysTasks.filter((t) => t.completed).length
-
-  const handleTaskComplete = (taskId: string) => {
-    const task = tasks.find((t) => t.id === taskId)
-    if (task) {
-      setSelectedTask(task)
-      setDialogOpen(true)
-    }
-  }
-
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const handleConfirmTime = (minutes: number) => {
     if (selectedTask) {
       onCompleteTask(selectedTask.id, minutes,selectedTask.priority)
@@ -49,6 +24,8 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
       setSelectedTask(null)
     }
   }
+
+  const handleCompleteTask = (taskId: string) => {}
 
   return (
     <div className="space-y-6 pb-20">
@@ -61,7 +38,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
             <Star className="h-4 w-4 fill-primary text-primary" />
-            <span className="text-sm font-semibold text-primary">{user.totalPoints}</span>
+            <span className="text-sm font-semibold text-primary">{user.points}</span>
           </div>
           <Button 
             variant="ghost" 
@@ -81,15 +58,15 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
           <div>
             <p className="text-sm opacity-90">{"Today's Progress"}</p>
             <p className="text-2xl font-bold">
-              {completedToday} / {todaysTasks.length}
+              {/*completedToday} / {todaysTasks.length*/}
             </p>
             <p className="text-xs opacity-75">tasks completed</p>
           </div>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20">
             <span className="text-xl font-bold">
-              {todaysTasks.length === 0
+              {/*todaysTasks.length === 0
                 ? 0
-                : Math.round((completedToday / todaysTasks.length) * 100)}%
+                : Math.round((completedToday / todaysTasks.length) * 100)*/}%
             </span>
           </div>
         </div>
@@ -100,13 +77,13 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">{"Today's Tasks"}</h2>
           <span className="text-sm text-muted-foreground">
-            {todaysTasks.length} remaining
+            {/*todaysTasks.length*/} remaining
           </span>
         </div>
         <div className="space-y-3">
-          {todaysTasks.length > 0 ? (
-            todaysTasks.map((task) => (
-              <TaskCard key={task.id} task={task} onComplete={handleTaskComplete} />
+          {tasks.length > 0 ? (
+            tasks.map((task) => (
+              <TaskCard key={task.id} task={task} onComplete={handleCompleteTask} />
             ))
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
@@ -116,16 +93,6 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </section>
 
-      {/* Pomodoro Button */}
-      <Button
-        onClick={() => setPomodoroOpen(true)}
-        className="w-full gap-2"
-        size="lg"
-      >
-        <Timer className="h-5 w-5" />
-        Start Pomodoro
-      </Button>
-
       {/* Study Time Dialog */}
       <StudyTimeDialog
         open={dialogOpen}
@@ -133,9 +100,6 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         onConfirm={handleConfirmTime}
         taskName={selectedTask?.bookName || ''}
       />
-
-      {/* Pomodoro Timer Dialog */}
-      <PomodoroTimer open={pomodoroOpen} onOpenChange={setPomodoroOpen} />
     </div>
   )
 }

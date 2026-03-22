@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { auth } from '@/lib/FirebaseConfig'
-import { Book, Plus, Pencil, Trash2, Target, TrendingUp } from 'lucide-react'
+import { Book, Plus, Pencil, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import type { StudyBook } from '@/lib/types'
+import { Timestamp } from 'firebase/firestore'
 
 interface BooksScreenProps {
   books: StudyBook[]
@@ -62,7 +63,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
     subject: '',
     totalPages: 0,
     completedPages: 0,
-    monthlyTarget: 0,
+    createdAt: Timestamp.now(),
   })
 
   const totalBooks = books.length
@@ -78,7 +79,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
         subject: '',
         totalPages: 0,
         completedPages: 0,
-        monthlyTarget: 0,
+        createdAt: Timestamp.now()
       })
       if (user) {
         onAddBook(newBook)
@@ -187,7 +188,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
               <div className="text-xs text-muted-foreground">Total Books</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-foreground">{completedPages}</div>
+              <div className="text-2xl font-bold text-foreground">{completedPages || 0}</div>
               <div className="text-xs text-muted-foreground">Pages Done</div>
             </div>
             <div>
