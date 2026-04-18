@@ -12,25 +12,34 @@ import { Logout } from '@/lib/firebase/auth'
 interface HomeScreenProps {
   tasks: DailyTask[]
   user: UserProfile
-  onCompleteTask: (taskId: string, studyTime: number, priority: string) => void
+  onCompleteTask: (taskId: string, studyTime: number, priority: string, isReview: boolean) => void
 }
 
 export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
-  const [pomodoroOpen, setPomodoroOpen] = useState(false)
 
   const today = new Date()
   
-  const todaysTasks = tasks.filter((task) => {
-    const taskDate = task.date.toDate()
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    return (
-      taskDate.getFullYear() === today.getFullYear() &&
-      taskDate.getMonth() === today.getMonth() &&
-      taskDate.getDate() === today.getDate()
-    )
-  })
+  const todaysTasks = tasks.filter((task) => {
+    const taskDate = task.date.toDate();
+    // タスクの日の 00:00:00 の状態を作る
+    const normalizedTaskDate = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+
+    // 1. 今日かどうかの判定
+    const isToday = normalizedTaskDate.getTime() === startOfToday.getTime();
+    
+    // 2. 今日より前かどうかの判定
+    const isPast = normalizedTaskDate.getTime() < startOfToday.getTime();
+    
+    // 3. 未完了かどうかの判定 (プロパティ名は環境に合わせてください)
+    const isUncompleted = !task.completed; 
+
+    // 「今日」または「過去かつ未完了」を返す
+    return isToday || (isPast && isUncompleted);
+  });
 
   const completedToday = todaysTasks.filter((t) => t.completed).length
 
@@ -42,9 +51,9 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
     }
   }
 
-  const handleConfirmTime = (minutes: number) => {
+  const handleConfirmTime = (minutes: number, isReview: boolean) => {
     if (selectedTask) {
-      onCompleteTask(selectedTask.id, minutes,selectedTask.priority)
+      onCompleteTask(selectedTask.id, minutes,selectedTask.priority,isReview)
       setDialogOpen(false)
       setSelectedTask(null)
     }
@@ -116,16 +125,6 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </section>
 
-      {/* Pomodoro Button */}
-      <Button
-        onClick={() => setPomodoroOpen(true)}
-        className="w-full gap-2"
-        size="lg"
-      >
-        <Timer className="h-5 w-5" />
-        Start Pomodoro
-      </Button>
-
       {/* Study Time Dialog */}
       <StudyTimeDialog
         open={dialogOpen}
@@ -133,9 +132,6 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         onConfirm={handleConfirmTime}
         taskName={selectedTask?.bookName || ''}
       />
-
-      {/* Pomodoro Timer Dialog */}
-      <PomodoroTimer open={pomodoroOpen} onOpenChange={setPomodoroOpen} />
     </div>
   )
 }

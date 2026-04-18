@@ -28,6 +28,7 @@ export interface DailyTask {
   completed: boolean
   weekday: Day
   subject: string
+  review: boolean
 }
 
 export interface WeeklyTask {

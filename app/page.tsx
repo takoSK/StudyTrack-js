@@ -187,11 +187,13 @@ export default function StudyApp() {
     )
   }
 
-  const handleCompleteTask = async (taskId: string, studyTime: number, priority: string) => {
+  const handleCompleteTask = async (taskId: string, studyTime: number, priority: string, isReview: boolean) => {
     const user = auth.currentUser
     if (!user) return
 
     const point = calcPoint(studyTime, priority)
+
+    
 
     await deleteDailyTask(user.uid,taskId)
 

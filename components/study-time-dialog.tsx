@@ -8,7 +8,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog';
+import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,7 +18,7 @@ import { Clock } from 'lucide-react'
 interface StudyTimeDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onConfirm: (minutes: number) => void
+  onConfirm: (minutes: number, isReview: boolean) => void
   taskName: string
 }
 
@@ -27,12 +28,13 @@ export function StudyTimeDialog({
   onConfirm,
   taskName,
 }: StudyTimeDialogProps) {
-  const [minutes, setMinutes] = useState('')
+  const [minutes, setMinutes] = useState('0')
+  const [isReview, setIsReview] = useState(false)
 
   const handleConfirm = () => {
     const time = parseInt(minutes, 10)
-    if (time > 0) {
-      onConfirm(time)
+    if (time >= 0) {
+      onConfirm(time,isReview)
       setMinutes('')
     }
   }
@@ -65,6 +67,19 @@ export function StudyTimeDialog({
               </Button>
             ))}
           </div>
+          {/*<div className="flex items-center space-x-2 py-6">
+            <Checkbox 
+              id="urgent" 
+              checked={isReview}
+              onCheckedChange={(checked) => setIsReview(!!checked)}
+            />
+            <Label 
+              htmlFor="urgent" 
+              className="text-sm font-medium leading-none cursor-pointer"
+            >
+              このタスクを「至急」としてマークする
+            </Label>
+          </div>*/}
           <div className="space-y-2">
             <Label htmlFor="minutes">Or enter custom time</Label>
             <div className="flex items-center gap-2">
@@ -85,7 +100,7 @@ export function StudyTimeDialog({
         <DialogFooter>
           <Button
             onClick={handleConfirm}
-            disabled={!minutes || parseInt(minutes, 10) <= 0}
+            disabled={!minutes}
             className="w-full"
           >
             Complete Task (+{minutes ? Math.floor(parseInt(minutes, 10) / 5) * 5 : 0} pts)

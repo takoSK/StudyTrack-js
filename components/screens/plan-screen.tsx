@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label'
 import {
   Plus,
+  Minus,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -42,7 +43,7 @@ interface PlanScreenProps {
 }
 
 export function PlanScreen({ books, weeklyTasks, onAddWeeklyTask, onUpdateWeeklyTask, onDeleteWeeklyTask, onGenerateDailyTasks }: PlanScreenProps) {
-  const [currentWeek, setCurrentWeek] = useState(1)
+  const [currentWeek, setCurrentWeek] = useState(getWeekNumber(new Date(2026,3,6), new Date()))
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [taskForm, setTaskForm] = useState({
@@ -66,9 +67,35 @@ export function PlanScreen({ books, weeklyTasks, onAddWeeklyTask, onUpdateWeekly
     "Sun"
   ]
 
+  function getWeekNumber(startDateCounter: Date, targetDate: Date = new Date()): number {
+    console.log(new Date())
+    // 1日のミリ秒数 (1000ms * 60s * 60m * 24h)
+    const MS_PER_DAY = 86400000;
+
+    // 時刻の影響を排除するため、両方の日の「00:00:00」のタイムスタンプを取得
+    const start = new Date(
+      startDateCounter.getFullYear(),
+      startDateCounter.getMonth(),
+      startDateCounter.getDate()
+    ).getTime();
+
+    const target = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      targetDate.getDate()
+    ).getTime();
+
+    // 経過日数を計算
+    const diffInDays = Math.floor((target - start) / MS_PER_DAY);
+
+    // 0〜6日経過 = 1週目、7〜13日経過 = 2週目...
+    // もし開始日より前の日付が指定された場合はマイナスの週数、または0を返す
+    return Math.floor(diffInDays / 7) + 1;
+  }
+
   // Calculate week dates
   const getWeekDates = (weekNum: number) => {
-    const baseDate = new Date(2026, 2, 16) // Mar 16
+    const baseDate = new Date(2026, 3, 6) // Mar 16
     const start = new Date(baseDate)
     start.setDate(start.getDate() + (weekNum - 1) * 7)
     const end = new Date(start)
@@ -126,7 +153,7 @@ export function PlanScreen({ books, weeklyTasks, onAddWeeklyTask, onUpdateWeekly
 
   const handleGenerateDailyTasks = (task: WeeklyTask) => {
     if (!task.isDistributed) {
-      const baseDate = new Date(2026, 2, 16)
+      const baseDate = new Date(2026, 3, 6)
 
       const start = new Date(baseDate)
       start.setDate(start.getDate() + (currentWeek - 1) * 7)
@@ -370,27 +397,48 @@ export function PlanScreen({ books, weeklyTasks, onAddWeeklyTask, onUpdateWeekly
           </DialogHeader>
 
           <div className="space-y-3">
-
             {WEEKDAYS.map((day, index) => (
               <div key={day} className="flex items-center justify-between">
+                <span className="w-16 font-medium">{day}</span>
 
-                <span className="w-16">{day}</span>
+                <div className="flex items-center gap-2">
+                  {/* マイナスボタン */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => {
+                      const newWeights = [...weights];
+                      // 1減らす（0未満にしたくない場合は Math.max(0, weights[index] - 1)）
+                      newWeights[index] = Math.max(0, weights[index] - 1);
+                      setWeights(newWeights);
+                    }}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
 
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={weights[index]}
-                  onChange={(e) => {
-                    const newWeights = [...weights]
-                    newWeights[index] = Number(e.target.value)
-                    setWeights(newWeights)
-                  }}
-                  className="w-24"
-                />
+                  {/* 数値表示 */}
+                  <div className="w-10 text-center font-mono text-lg">
+                    {weights[index]}
+                  </div>
 
+                  {/* プラスボタン */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => {
+                      const newWeights = [...weights];
+                      // 1増やす
+                      newWeights[index] = weights[index] + 1;
+                      setWeights(newWeights);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
-
           </div>
 
           <Button

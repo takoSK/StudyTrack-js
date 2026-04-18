@@ -34,7 +34,7 @@ import { addDailyTask } from '@/lib/firebase/firestoreClient'
 interface TasksScreenProps {
   books: StudyBook[]
   tasks: DailyTask[]
-  onCompleteTask: (taskId: string, studyTime: number, priority: string) => void
+  onCompleteTask: (taskId: string, studyTime: number, priority: string, isReview: boolean) => void
   onAddTask: (task: Omit<DailyTask, 'id' | 'completed'>) => void
 }
 
@@ -126,9 +126,9 @@ export function TasksScreen({ books, tasks, onCompleteTask }: TasksScreenProps) 
     }
   }
 
-  const handleConfirmTime = (minutes: number) => {
+  const handleConfirmTime = (minutes: number, isReview: boolean) => {
     if (selectedTask) {
-      onCompleteTask(selectedTask.id, minutes,selectedTask.priority)
+      onCompleteTask(selectedTask.id, minutes,selectedTask.priority,isReview)
       setDialogOpen(false)
       setSelectedTask(null)
     }
