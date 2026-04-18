@@ -34,6 +34,7 @@ export function distributeTask(task: WeeklyTask, days: Date[], weights: number[]
       completed:false,
       weekday: dayNames[i],
       subject: task.subject,
+      review: false,
     })
 
     currentPage = end + 1
