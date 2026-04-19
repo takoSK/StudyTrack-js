@@ -47,7 +47,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
               variant="outline"
               className={cn('text-[10px] capitalize')}
             >
-              {task.priority}
+              {task.review ? 'Review' : 'New'}
             </Badge>
           </div>
           <h3 className="flex items-center gap-2 font-medium text-card-foreground">

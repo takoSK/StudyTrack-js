@@ -67,7 +67,7 @@ export function StudyTimeDialog({
               </Button>
             ))}
           </div>
-          {/*<div className="flex items-center space-x-2 py-6">
+          {<div className="flex items-center space-x-2 py-6">
             <Checkbox 
               id="urgent" 
               checked={isReview}
@@ -77,9 +77,9 @@ export function StudyTimeDialog({
               htmlFor="urgent" 
               className="text-sm font-medium leading-none cursor-pointer"
             >
-              このタスクを「至急」としてマークする
+              復習用のタスクを生成する
             </Label>
-          </div>*/}
+          </div>}
           <div className="space-y-2">
             <Label htmlFor="minutes">Or enter custom time</Label>
             <div className="flex items-center gap-2">

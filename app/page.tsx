@@ -15,11 +15,13 @@ import type { DailyTask, UserProfile, StudyBook, WeeklyTask, Reward } from '@/li
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint, addReward, deletePoint } from '@/lib/firebase/firestoreClient'
+import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint, addReward, deletePoint, addDailyTask } from '@/lib/firebase/firestoreClient'
 import { onSnapshot, collection, doc } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import { PlanScreen } from '@/components/screens/plan-screen'
 import { calcPoint, distributeTask } from '@/lib/TasksUtil'
+import { Timestamp } from 'firebase/firestore'
+import { is } from 'date-fns/locale'
 
 export default function StudyApp() {
   const [activeTab, setActiveTab] = useState('home')
@@ -176,8 +178,6 @@ export default function StudyApp() {
     ? Math.round((tasks.filter((t) => t.completed).length / tasks.length) * 100)
     : 0
 
-
-
   const handleGenerateDailyTasks = (task: WeeklyTask, date: Date[], weights: number[]) => {
     const distributedTasks = distributeTask(task, date, weights)
     addDailyTasks(user.id,distributedTasks)
@@ -193,20 +193,39 @@ export default function StudyApp() {
 
     const point = calcPoint(studyTime, priority)
 
-    
-
+    if (isReview) {
+      const task = dailyTasks.find((t) => t.id === taskId)
+      await completeAndCreateNextDayTask(task!)
+    }
     await deleteDailyTask(user.uid,taskId)
 
     await addPoint(user.uid, point ?? 0)
   }
 
-  const handleAddTask = (task: Omit<DailyTask, 'id' | 'completed' | 'studyTime'>) => {
-    const newTask: DailyTask = {
-      id: `task-${Date.now()}`,
-      completed: false,
-      ...task,
+  const completeAndCreateNextDayTask = async (currentTask: DailyTask) => {
+    const user = auth.currentUser
+    if (!user) return
+    // 1. 現在のタスクの日付をベースに「翌日」を計算
+    const currentDate =  new Date();
+    const nextDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);// 現在の日付に1日分のミリ秒を加算
+
+    const {id, ...rest} = currentTask
+    const newTask = {
+      ...rest,
+      date: Timestamp.fromDate(nextDate), // タスクの日付を「翌日」に設定
     }
-    setTasks((prev) => [...prev, newTask])
+
+    handleAddTask(newTask)
+  };
+
+  const handleAddTask = (task: Omit<DailyTask,'id' | 'completed'>) => {
+    const newTask: Omit<DailyTask, 'id'> = {
+      ...task,
+      completed: false,
+      review: true,
+    }
+
+    addDailyTask(user.id, newTask)
   }
 
 
@@ -244,7 +263,6 @@ export default function StudyApp() {
             books={books}
             tasks={dailyTasks}
             onCompleteTask={handleCompleteTask}
-            onAddTask={handleAddTask}
           />
         )}
         {activeTab === 'plans' && (

@@ -35,7 +35,6 @@ interface TasksScreenProps {
   books: StudyBook[]
   tasks: DailyTask[]
   onCompleteTask: (taskId: string, studyTime: number, priority: string, isReview: boolean) => void
-  onAddTask: (task: Omit<DailyTask, 'id' | 'completed'>) => void
 }
 
 const WEEKDAYS: { key: Day; label: string }[] = [
@@ -75,7 +74,7 @@ function getWeekDays(weekOffset: number) {
   const today = new Date()
 
   const monday = new Date(today)
-  monday.setDate(today.getDate() - today.getDay() + 1 + (weekOffset) * 7)
+  monday.setDate(today.getDate() - today.getDay() + 1 + (weekOffset - 1) * 7)
 
   const days: Date[] = []
 
