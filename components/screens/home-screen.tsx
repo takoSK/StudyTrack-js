@@ -104,26 +104,65 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </div>
 
-      {/* Today's Tasks */}
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">{"Today's Tasks"}</h2>
-          <span className="text-sm text-muted-foreground">
-            {todaysTasks.length} remaining
-          </span>
+  <div className="mb-3 flex items-center justify-between">
+    <h2 className="text-lg font-semibold text-foreground">
+      {"Today's Tasks"}
+    </h2>
+
+    <span className="text-sm text-muted-foreground">
+      {todaysTasks.length} remaining
+    </span>
+  </div>
+
+  <div className="space-y-5">
+    {todaysTasks.length > 0 ? (
+      Object.entries(
+        todaysTasks.reduce((acc, task) => {
+          const key = task.bookName || "Others"
+
+          if (!acc[key]) acc[key] = []
+          acc[key].push(task)
+
+          return acc
+        }, {} as Record<string, typeof todaysTasks>)
+      ).map(([bookName, tasks]) => (
+        <div
+          key={bookName}
+          className="rounded-2xl border border-border bg-card p-4"
+        >
+          {/* 参考書タイトル */}
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="font-semibold text-foreground">
+              {bookName}
+            </h3>
+
+            <span className="text-sm text-muted-foreground">
+              {tasks.length} tasks
+            </span>
+          </div>
+
+          {/* タスクリスト */}
+          <div className="space-y-3">
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onComplete={handleTaskComplete}
+              />
+            ))}
+          </div>
         </div>
-        <div className="space-y-3">
-          {todaysTasks.length > 0 ? (
-            todaysTasks.map((task) => (
-              <TaskCard key={task.id} task={task} onComplete={handleTaskComplete} />
-            ))
-          ) : (
-            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-              <p className="text-muted-foreground">All tasks completed! Great job!</p>
-            </div>
-          )}
-        </div>
-      </section>
+      ))
+    ) : (
+      <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+        <p className="text-muted-foreground">
+          All tasks completed! Great job!
+        </p>
+      </div>
+    )}
+  </div>
+</section>
 
       {/* Study Time Dialog */}
       <StudyTimeDialog
