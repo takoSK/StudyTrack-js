@@ -21,6 +21,8 @@ export const userProfile: UserProfile = {
   id: 'user-1',
   name: 'Alex',
   totalPoints: 450,
-  tasksCompleted: 42,
-  totalStudyMinutes: 1850,
+  tasksCompleted: 30,
+  lastOpenedDate: '2024-06-15',
+  todayStudyTime: 120,
+  totalStudyTime: 1850,
 }

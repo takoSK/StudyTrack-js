@@ -15,7 +15,7 @@ import type { DailyTask, UserProfile, StudyBook, WeeklyTask, Reward } from '@/li
 import AuthGuard from '@/components/AuthGuard'
 import {auth } from "@/lib/FirebaseConfig"
 import { useEffect } from 'react'
-import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint, addReward, deletePoint, addDailyTask } from '@/lib/firebase/firestoreClient'
+import { deleteBook, updateBook, addBook, addWeeklyTask, updateWeeklyTask, deleteWeeklyTask, addDailyTasks, deleteDailyTask, addPoint, addReward, deletePoint, addDailyTask, updateTime } from '@/lib/firebase/firestoreClient'
 import { onSnapshot, collection, doc } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import { PlanScreen } from '@/components/screens/plan-screen'
@@ -35,7 +35,9 @@ export default function StudyApp() {
   name: "",
   totalPoints: 0,
   tasksCompleted: 0,
-  totalStudyMinutes: 0
+  todayStudyTime: 0,
+  totalStudyTime: 0,
+  lastOpenedDate: new Date().toLocaleDateString("sv-SE")
   })
 
   useEffect(() => {
@@ -111,6 +113,19 @@ export default function StudyApp() {
       }
     )
   })
+
+  async function checkDateReset() {
+
+    const today =
+      new Date().toISOString().split("T")[0]
+
+    if (user.lastOpenedDate !== today) {
+
+      await updateTime(user.id, 0)
+    }
+  }
+
+  checkDateReset()
 
   return () => {
     unsubscribeAuth()
@@ -200,6 +215,8 @@ export default function StudyApp() {
     await deleteDailyTask(user.uid,taskId)
 
     await addPoint(user.uid, point ?? 0)
+
+    await updateTime(user.uid, studyTime)
   }
 
   const completeAndCreateNextDayTask = async (currentTask: DailyTask) => {
