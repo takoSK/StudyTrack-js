@@ -161,3 +161,28 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     ...(snapshot.data() as Omit<UserProfile, "id">)
   }
 }
+
+export async function updateTime(userId: string, studyTime: number) {
+  try {
+    const userRef = doc(db, "users", userId)
+    await updateDoc(userRef, {
+      todayStudyTime: increment(studyTime),
+      totalStudyTime: increment(studyTime)
+    })
+    updateToday(userId)
+  } catch (error) {
+    console.error("Error updating study time: ", error);
+  }
+}
+
+export async function updateToday(userId:string) {
+  try {
+    const userRef = doc(db, "users", userId)
+    const today = new Date().toLocaleDateString("sv-SE")
+    await updateDoc(userRef, {
+      lastOpenedDate: today,
+    })
+  } catch (error) {
+    console.error("Error updating last opened date: ", error);
+  }
+}

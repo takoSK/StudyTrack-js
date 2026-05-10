@@ -5,7 +5,9 @@ export interface UserProfile {
   name: string
   totalPoints: number
   tasksCompleted: number
-  totalStudyMinutes: number
+  todayStudyTime: number
+  totalStudyTime: number
+  lastOpenedDate: string
 }
 
 export interface StudyBook {

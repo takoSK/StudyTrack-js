@@ -15,9 +15,57 @@ interface HomeScreenProps {
   onCompleteTask: (taskId: string, studyTime: number, priority: string, isReview: boolean) => void
 }
 
+function balanceTasks(tasks: DailyTask[]) {
+
+  // 教科ごとに分類
+  const grouped: Record<string, DailyTask[]> = {}
+
+  tasks.forEach((task) => {
+
+    if (!grouped[task.subject]) {
+      grouped[task.subject] = []
+    }
+
+    grouped[task.subject].push(task)
+  })
+
+  // 教科一覧
+  const subjects = Object.keys(grouped)
+
+  const result: DailyTask[] = []
+
+  let added = true
+
+  // 1教科ずつ順番に取り出す
+  while (added) {
+
+    added = false
+
+    for (const subject of subjects) {
+
+      const task = grouped[subject].shift()
+
+      if (task) {
+        result.push(task)
+        added = true
+      }
+    }
+  }
+
+  return result
+}
+
+function formatStudyTime(minutes: number) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+
+  return `${h}h ${m}m`
+}
+
 export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
+  const nextTask = balanceTasks(tasks)[0]
 
   const today = new Date()
   
@@ -40,6 +88,8 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
     // 「今日」または「過去かつ未完了」を返す
     return isToday || (isPast && isUncompleted);
   });
+
+  const balancedTasks = balanceTasks(todaysTasks)
 
   const completedToday = todaysTasks.filter((t) => t.completed).length
 
@@ -104,65 +154,63 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </div>
 
-      <section>
-  <div className="mb-3 flex items-center justify-between">
-    <h2 className="text-lg font-semibold text-foreground">
-      {"Today's Tasks"}
-    </h2>
+      <section className="mb-6">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          
+          <p className="text-xs text-muted-foreground">
+            Today Study Time
+          </p>
 
-    <span className="text-sm text-muted-foreground">
-      {todaysTasks.length} remaining
-    </span>
-  </div>
+          <p className="text-2xl font-semibold">
+            {formatStudyTime(user.todayStudyTime)}
+          </p>
 
-  <div className="space-y-5">
-    {todaysTasks.length > 0 ? (
-      Object.entries(
-        todaysTasks.reduce((acc, task) => {
-          const key = task.bookName || "Others"
+          <p className="text-xs text-muted-foreground">
+            This Week
+          </p>
 
-          if (!acc[key]) acc[key] = []
-          acc[key].push(task)
+          <p className="text-2xl font-semibold">
+            {formatStudyTime(user.totalStudyTime)}
+          </p>
 
-          return acc
-        }, {} as Record<string, typeof todaysTasks>)
-      ).map(([bookName, tasks]) => (
-        <div
-          key={bookName}
-          className="rounded-2xl border border-border bg-card p-4"
-        >
-          {/* 参考書タイトル */}
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-semibold text-foreground">
-              {bookName}
-            </h3>
-
-            <span className="text-sm text-muted-foreground">
-              {tasks.length} tasks
-            </span>
-          </div>
-
-          {/* タスクリスト */}
-          <div className="space-y-3">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onComplete={handleTaskComplete}
-              />
-            ))}
-          </div>
         </div>
-      ))
-    ) : (
-      <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-        <p className="text-muted-foreground">
-          All tasks completed! Great job!
-        </p>
-      </div>
+      </section>
+
+      {nextTask && (
+      <section className="mb-6">
+        <div className="rounded-2xl border bg-card p-5 shadow-sm">
+
+          <p className="text-sm text-foreground">
+            Next Task
+          </p>
+
+          <p className="mt-2 text-xl text-foreground">
+            {nextTask.bookName}
+          </p>
+
+        </div>
+      </section>
     )}
-  </div>
-</section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">{"Today's Tasks"}</h2>
+          <span className="text-sm text-muted-foreground">
+            {balancedTasks.length} remaining
+          </span>
+        </div>
+        <div className="space-y-3">
+          {balancedTasks.length > 0 ? (
+            balancedTasks.map((task) => (
+              <TaskCard key={task.id} task={task} onComplete={handleTaskComplete} />
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+              <p className="text-muted-foreground">All tasks completed! Great job!</p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Study Time Dialog */}
       <StudyTimeDialog
