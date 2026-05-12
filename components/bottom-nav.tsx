@@ -13,7 +13,6 @@ const tabs = [
   { id: 'tasks', label: 'Tasks', icon: ListTodo },
   { id: 'plans', label: 'Plans', icon: ListTodo },
   { id: 'books', label: 'Books', icon: Book },
-  { id: 'analysis', label: 'Analysis', icon: BarChart3 },
   { id: 'rewards', label: 'Rewards', icon: Gift },
 ]
 

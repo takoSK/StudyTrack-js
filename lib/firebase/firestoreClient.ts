@@ -1,6 +1,6 @@
 import {collection, addDoc, doc, getDoc, updateDoc, deleteDoc, writeBatch, increment} from 'firebase/firestore'
 import { db } from '../FirebaseConfig'
-import { DailyTask, Reward, StudyBook, UserProfile, WeeklyTask } from '../types'; 
+import { DailyTask, Reward, StudyBook, AppUser, WeeklyTask } from '../types'; 
 
 export async function addBook(userId: string, book: Omit<StudyBook, "id">) {
   const docRef = await addDoc(
@@ -149,7 +149,7 @@ export async function deletePoint(userId: string, points: number) {
 }
 
 
-export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+export async function getAppUser(userId: string): Promise<AppUser | null> {
 
   const docRef = doc(db, "users", userId)
   const snapshot = await getDoc(docRef)
@@ -158,7 +158,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
   return {
     id: snapshot.id,
-    ...(snapshot.data() as Omit<UserProfile, "id">)
+    ...(snapshot.data() as Omit<AppUser, "id">)
   }
 }
 
@@ -169,20 +169,23 @@ export async function updateTime(userId: string, studyTime: number) {
       todayStudyTime: increment(studyTime),
       totalStudyTime: increment(studyTime)
     })
-    updateToday(userId)
   } catch (error) {
     console.error("Error updating study time: ", error);
   }
 }
 
-export async function updateToday(userId:string) {
+type UpdateUserDate = {
+  todayStudyTime?: number,
+  totalStudyTime?: number,
+  lastOpenedDate?: string,
+}
+
+export async function updateToday(uid: string, date: UpdateUserDate) {
   try {
-    const userRef = doc(db, "users", userId)
-    const today = new Date().toLocaleDateString("sv-SE")
-    await updateDoc(userRef, {
-      lastOpenedDate: today,
-    })
+    const userRef = doc(db, "users", uid) 
+
+    await updateDoc(userRef, date)
   } catch (error) {
-    console.error("Error updating last opened date: ", error);
+    console.error("Error updating today's date: ", error)
   }
 }

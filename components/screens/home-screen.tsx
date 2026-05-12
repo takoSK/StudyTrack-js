@@ -1,58 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LogOut, Star, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/task-card'
 import { StudyTimeDialog } from '@/components/study-time-dialog'
 import { PomodoroTimer } from '@/components/pomodoro-timer'
-import type { DailyTask, UserProfile } from '@/lib/types'
+import type { DailyTask, AppUser } from '@/lib/types'
 import { Logout } from '@/lib/firebase/auth'
 
 interface HomeScreenProps {
   tasks: DailyTask[]
-  user: UserProfile
+  user: AppUser
   onCompleteTask: (taskId: string, studyTime: number, priority: string, isReview: boolean) => void
-}
-
-function balanceTasks(tasks: DailyTask[]) {
-
-  // 教科ごとに分類
-  const grouped: Record<string, DailyTask[]> = {}
-
-  tasks.forEach((task) => {
-
-    if (!grouped[task.subject]) {
-      grouped[task.subject] = []
-    }
-
-    grouped[task.subject].push(task)
-  })
-
-  // 教科一覧
-  const subjects = Object.keys(grouped)
-
-  const result: DailyTask[] = []
-
-  let added = true
-
-  // 1教科ずつ順番に取り出す
-  while (added) {
-
-    added = false
-
-    for (const subject of subjects) {
-
-      const task = grouped[subject].shift()
-
-      if (task) {
-        result.push(task)
-        added = true
-      }
-    }
-  }
-
-  return result
 }
 
 function formatStudyTime(minutes: number) {
@@ -65,12 +25,12 @@ function formatStudyTime(minutes: number) {
 export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
-  const nextTask = balanceTasks(tasks)[0]
 
   const today = new Date()
   
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
   const todaysTasks = tasks.filter((task) => {
     const taskDate = task.date.toDate();
     // タスクの日の 00:00:00 の状態を作る
@@ -88,10 +48,14 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
     // 「今日」または「過去かつ未完了」を返す
     return isToday || (isPast && isUncompleted);
   });
+  const nextTask = useMemo(() => {
+    if (todaysTasks.length === 0) return null
 
-  const balancedTasks = balanceTasks(todaysTasks)
+    const randomIndex = Math.floor(Math.random() * todaysTasks.length)
 
-  const completedToday = todaysTasks.filter((t) => t.completed).length
+    return todaysTasks[randomIndex]
+  }, [todaysTasks])
+
 
   const handleTaskComplete = (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId)
@@ -134,26 +98,6 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </header>
 
-      {/* Progress Summary */}
-      <div className="rounded-xl bg-primary p-4 text-primary-foreground">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm opacity-90">{"Today's Progress"}</p>
-            <p className="text-2xl font-bold">
-              {completedToday} / {todaysTasks.length}
-            </p>
-            <p className="text-xs opacity-75">tasks completed</p>
-          </div>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20">
-            <span className="text-xl font-bold">
-              {todaysTasks.length === 0
-                ? 0
-                : Math.round((completedToday / todaysTasks.length) * 100)}%
-            </span>
-          </div>
-        </div>
-      </div>
-
       <section className="mb-6">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           
@@ -166,7 +110,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
           </p>
 
           <p className="text-xs text-muted-foreground">
-            This Week
+            Total Study Time
           </p>
 
           <p className="text-2xl font-semibold">
@@ -176,7 +120,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </section>
 
-      {nextTask && (
+      {todaysTasks[0] && (
       <section className="mb-6">
         <div className="rounded-2xl border bg-card p-5 shadow-sm">
 
@@ -185,7 +129,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
           </p>
 
           <p className="mt-2 text-xl text-foreground">
-            {nextTask.bookName}
+            {todaysTasks[0].bookName}
           </p>
 
         </div>
@@ -196,12 +140,12 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">{"Today's Tasks"}</h2>
           <span className="text-sm text-muted-foreground">
-            {balancedTasks.length} remaining
+            {todaysTasks.length} remaining
           </span>
         </div>
         <div className="space-y-3">
-          {balancedTasks.length > 0 ? (
-            balancedTasks.map((task) => (
+          {todaysTasks.length > 0 ? (
+            todaysTasks.map((task) => (
               <TaskCard key={task.id} task={task} onComplete={handleTaskComplete} />
             ))
           ) : (

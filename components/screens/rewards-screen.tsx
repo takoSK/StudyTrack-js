@@ -4,14 +4,14 @@ import { useState } from 'react'
 import { Star, Plus } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import type { Reward, UserProfile } from '@/lib/types'
+import type { Reward, AppUser } from '@/lib/types'
 import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogHeader } from '../ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '../ui/input'
 
 interface RewardsScreenProps {
   rewards: Reward[]
-  user: UserProfile
+  user: AppUser
   onRedeem: (rewardId: string) => void
   onAddRedeem: (redeem: Omit<Reward, 'id'>) => void
 }

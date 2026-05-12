@@ -1,4 +1,4 @@
-import type { StudyStats, SubjectDistribution, UserProfile } from './types'
+import type { StudyStats, SubjectDistribution, AppUser } from './types'
 
 export const weeklyStudyStats: StudyStats[] = [
   { day: 'Mon', minutes: 120 },
@@ -17,7 +17,7 @@ export const subjectDistribution: SubjectDistribution[] = [
   { subject: 'English', percentage: 18, color: '#95b8d1' },
 ]
 
-export const userProfile: UserProfile = {
+export const appUser: AppUser = {
   id: 'user-1',
   name: 'Alex',
   totalPoints: 450,

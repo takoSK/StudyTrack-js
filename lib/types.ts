@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore"
 
-export interface UserProfile {
+export interface AppUser {
   id: string
   name: string
   totalPoints: number

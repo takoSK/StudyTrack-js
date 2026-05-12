@@ -1,6 +1,8 @@
 import { Timestamp } from "firebase/firestore"
 import { DailyTask, Day } from "./types"
 import { WeeklyTask } from './types'
+import { AppUser } from "./types"
+import { updateToday } from "./firebase/firestoreClient"
 
 const dayNames: Day[] = [
   'monday','tuesday','wednesday','thursday','friday','saturday','sunday'
@@ -54,4 +56,23 @@ export function calcPoint(time: number,priority: string) {
   if (priority === "high") {
     return time * 3
   }
+}
+
+export async function checkDateReset(user: AppUser, uid: string) {
+  const today = new Date().toISOString().split('T')[0]
+  
+  if (user.lastOpenedDate !== today) {
+    await updateToday(uid, {
+      todayStudyTime: 0,
+      lastOpenedDate: today,
+    })
+
+    return {
+      ...user,
+      todayStudyTime: 0,
+      lastOpenedDate: today,
+    }
+  }
+
+  return user
 }
