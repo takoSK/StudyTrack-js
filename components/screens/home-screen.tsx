@@ -120,7 +120,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
         </div>
       </section>
 
-      {todaysTasks[0] && (
+      {nextTask && (
       <section className="mb-6">
         <div className="rounded-2xl border bg-card p-5 shadow-sm">
 
@@ -129,7 +129,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
           </p>
 
           <p className="mt-2 text-xl text-foreground">
-            {todaysTasks[0].bookName}
+            {nextTask.bookName}
           </p>
 
         </div>
