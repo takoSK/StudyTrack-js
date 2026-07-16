@@ -178,7 +178,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
         </Dialog>
       </div>
 
-      {/* Overall Stats */}
+      {/* Overall Stats 
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
         <CardContent className="pt-6">
           <div className="grid grid-cols-3 gap-4 text-center">
@@ -199,7 +199,7 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
             <Progress value={overallProgress} className="h-2" />
           </div>
         </CardContent>
-      </Card>
+      </Card>*/}
 
       {/* Books List */}
       <div className="space-y-3">
@@ -336,14 +336,9 @@ export function BooksScreen({ books, onAddBook, onUpdateBook, onDeleteBook }: Bo
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Progress */}
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{book.completedPages} / {book.totalPages} pages</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                    <div className="mt-1 text-right text-xs text-muted-foreground">{progress}% complete</div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{remainingPages} pages remaining</span>
+                    <span>{progress}% completed</span>
                   </div>
                 </CardContent>
               </Card>

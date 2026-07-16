@@ -27,9 +27,17 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null)
 
   const today = new Date()
-  
 
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const subjectOrder = [
+  "Mathematics",
+  "English",
+  "Japanese",
+  "Physics",
+  "Chemistry",
+  "Social"
+  ];
+
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   
   const todaysTasks = tasks.filter((task) => {
     const taskDate = task.date.toDate();
@@ -48,6 +56,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
     // 「今日」または「過去かつ未完了」を返す
     return isToday || (isPast && isUncompleted);
   });
+
   const nextTask = useMemo(() => {
     if (todaysTasks.length === 0) return null
 
@@ -55,6 +64,29 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
 
     return todaysTasks[randomIndex]
   }, [todaysTasks])
+
+  const sortedTasks = [...todaysTasks].sort((a, b) => {
+    const subjectA = subjectOrder.indexOf(a.subject);
+    const subjectB = subjectOrder.indexOf(b.subject);
+
+    // 教科順
+    if (subjectA !== subjectB) {
+      return subjectA - subjectB;
+    }
+
+    // 同じ教科なら参考書名順
+    return a.bookName.localeCompare(b.bookName);
+  });
+
+  const groupedTasks = sortedTasks.reduce((groups, task) => {
+    if (!groups[task.subject]) {
+      groups[task.subject] = [];
+    }
+
+    groups[task.subject].push(task);
+
+    return groups;
+  }, {} as Record<string, typeof sortedTasks>);
 
 
   const handleTaskComplete = (taskId: string) => {
@@ -134,7 +166,7 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
 
         </div>
       </section>
-    )}
+      )}
 
       <section>
         <div className="mb-3 flex items-center justify-between">
@@ -143,11 +175,34 @@ export function HomeScreen({ tasks, user, onCompleteTask }: HomeScreenProps) {
             {todaysTasks.length} remaining
           </span>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-6">
           {todaysTasks.length > 0 ? (
-            todaysTasks.map((task) => (
-              <TaskCard key={task.id} task={task} onComplete={handleTaskComplete} />
-            ))
+            subjectOrder.map((subject) => {
+              const tasks = groupedTasks[subject];
+
+              if (!tasks || tasks.length === 0) return null;
+
+              return (
+                <div key={subject}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground">
+                      {subject}
+                    </h3>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+
+                  <div className="space-y-3">
+                    {tasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onComplete={handleTaskComplete}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
               <p className="text-muted-foreground">All tasks completed! Great job!</p>
